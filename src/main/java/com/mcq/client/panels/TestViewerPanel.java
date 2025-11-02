@@ -16,8 +16,8 @@ import java.util.Collections; // <-- ADDED
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.stream.Collectors; // <-- ADDED
+import java.util.stream.IntStream; // <-- ADDED
 
 public class TestViewerPanel extends JPanel {
 
@@ -364,7 +364,50 @@ public class TestViewerPanel extends JPanel {
         }
     }
 
+    // --- NEW: Helper to format answers for submission ---
+    private List<String> getAnswersAsList() {
+        // This logic correctly "un-shuffles" the answers
+        // by iterating from 0 to N (original question indices)
+        return IntStream.range(0, totalQuestions)
+                .mapToObj(i -> answers.getOrDefault(i, "")) // Get answer for original index i
+                .collect(Collectors.toList());
+    }
+
+    // --- NEW: Worker to auto-save answers ---
+    private void saveAnswers() {
+        // Don't save if already submitting or if no answers
+        if (isSubmitting || answers.isEmpty()) return;
+
+        // Create a snapshot of the answers to send
+        final List<String> answersToSave = getAnswersAsList();
+
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                // Use the new API endpoint for saving
+                apiClient.updateTestAnswers(classroomCode, testname, answersToSave);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    // Log success
+                    System.out.println("Answers auto-saved at " + java.time.LocalTime.now());
+                } catch (Exception e) {
+                    // Log failure, but don't interrupt the user
+                    System.err.println("Failed to auto-save answers: " + e.getMessage());
+                }
+            }
+        }.execute();
+    }
+
     private void pollTestStatus() {
+        // --- MODIFIED: Call saveAnswers() first ---
+        saveAnswers();
+
+        // Now, poll for status
         new SwingWorker<Test, Void>() {
             @Override
             protected Test doInBackground() throws Exception {
@@ -391,13 +434,8 @@ public class TestViewerPanel extends JPanel {
         isSubmitting = true;
         stopPolling();
 
-        // This logic is correct. It iterates from 0 to N (the *original* question
-        // indices) and pulls the answer from the map, which we've keyed by the
-        // original question index. This correctly "un-shuffles" the answers
-        // for submission.
-        List<String> answersArray = IntStream.range(0, totalQuestions)
-                .mapToObj(i -> answers.getOrDefault(i, ""))
-                .collect(Collectors.toList());
+        // --- MODIFIED: Use new helper method ---
+        List<String> answersArray = getAnswersAsList();
 
         new SwingWorker<Void, Void>() {
             @Override

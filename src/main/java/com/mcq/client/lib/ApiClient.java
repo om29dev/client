@@ -195,6 +195,12 @@ public class ApiClient {
         request("/api/classrooms/" + classroomCode + "/tests/" + testname + "/submissions/submit", "POST", answers, new TypeToken<Void>() {});
     }
 
+    // --- NEW METHOD FOR AUTO-SAVE ---
+    public void updateTestAnswers(String classroomCode, String testname, List<String> answers) throws Exception {
+        request("/api/classrooms/" + classroomCode + "/tests/" + testname + "/submissions/update", "POST", answers, new TypeToken<Void>() {});
+    }
+    // --- END NEW METHOD ---
+
     public Test getActiveTestForStudent() throws Exception {
         return request("/api/classrooms/student/active-test", "GET", null, new TypeToken<Test>() {});
     }

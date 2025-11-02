@@ -16,6 +16,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.awt.Rectangle; 
 
 public class ClassroomDetailPanel extends JPanel {
 
@@ -124,19 +125,50 @@ public class ClassroomDetailPanel extends JPanel {
             studentListModel.addElement(student);
         }
         studentList = new JList<>(studentListModel);
+        
+        // --- MODIFICATION: Use new custom renderer ---
         studentList.setCellRenderer(new StudentCellRenderer(authService.isTeacher()));
 
         if (authService.isTeacher()) {
+            // --- MODIFICATION: New mouse listener to handle button clicks and double-clicks ---
             studentList.addMouseListener(new MouseAdapter() {
-                public void mouseClicked(MouseEvent evt) {
-                    if (evt.getClickCount() == 2) {
-                        String student = studentList.getSelectedValue();
-                        if (student != null) {
+                public void mouseClicked(MouseEvent e) {
+                    int index = studentList.locationToIndex(e.getPoint());
+                    if (index == -1) return;
+
+                    String student = studentList.getModel().getElementAt(index);
+                    
+                    // Get the renderer component to calculate button bounds
+                    Component rendererComp = studentList.getCellRenderer()
+                            .getListCellRendererComponent(studentList, student, index, false, false);
+                    
+                    // Check if it's our custom panel renderer
+                    if (rendererComp instanceof StudentCellRenderer renderer) {
+                        
+                        // Get the bounds of the delete button WITHIN the renderer
+                        Rectangle buttonBounds = renderer.deleteButton.getBounds();
+                        
+                        // Get the bounds of the entire cell
+                        Rectangle cellBounds = studentList.getCellBounds(index, index);
+                        
+                        // Translate the button's bounds to the JList's coordinate system
+                        // (We must also account for the renderer's insets if it has any)
+                        buttonBounds.translate(cellBounds.x, cellBounds.y);
+                        
+                        // Check if the click was inside the button's translated bounds
+                        if (renderer.deleteButton.isVisible() && buttonBounds.contains(e.getPoint())) {
+                            // Click was on the delete button
                             handleRemoveStudent(student);
+                        } else if (e.getClickCount() == 2) {
+                            // --- THIS IS THE FIX ---
+                            // Double-click on the rest of the cell, show student info
+                            handleShowStudentInfo(student);
+                            // --- END FIX ---
                         }
                     }
                 }
             });
+            // --- END MODIFICATION ---
         }
         studentPanel.add(new JScrollPane(studentList), BorderLayout.CENTER);
 
@@ -315,6 +347,46 @@ public class ClassroomDetailPanel extends JPanel {
     }
 
     // --- Action Handlers (Teacher) ---
+    
+    // --- NEW METHOD ---
+    private void handleShowStudentInfo(String studentUsername) {
+        // This worker will fetch data in the background
+        new SwingWorker<Models.User, Void>() {
+            @Override
+            protected Models.User doInBackground() throws Exception {
+                // Call the existing ApiClient method to get user details
+                return apiClient.getUserByUsername(studentUsername);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    Models.User student = get(); // Get the result
+                    String infoMessage = String.format(
+                        "Name: %s %s\nEmail: %s\nUsername: @%s",
+                        student.firstname(),
+                        student.lastname(),
+                        student.email(),
+                        student.username()
+                    );
+                    JOptionPane.showMessageDialog(
+                        ClassroomDetailPanel.this,
+                        infoMessage,
+                        "Student Information",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(
+                        ClassroomDetailPanel.this,
+                        "Failed to load student info: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        }.execute();
+    }
+    // --- END NEW METHOD ---
 
     private void handleRemoveStudent(String studentUsername) {
         int confirm = JOptionPane.showConfirmDialog(
@@ -337,9 +409,14 @@ public class ClassroomDetailPanel extends JPanel {
                     try {
                         get();
                         studentListModel.removeElement(studentUsername);
-                        ((TitledBorder)((JPanel)studentList.getParent().getParent()).getBorder())
+                        
+                        // --- FIX: Corrected parent hierarchy to find the JPanel and fix ClassCastException ---
+                        JPanel studentPanel = (JPanel) studentList.getParent().getParent().getParent();
+                        ((TitledBorder) studentPanel.getBorder())
                                 .setTitle("Students (" + studentListModel.getSize() + ")");
-                        studentList.getParent().getParent().repaint();
+                        studentPanel.repaint();
+                        // --- END FIX ---
+                        
                     } catch (Exception e) {
                         JOptionPane.showMessageDialog(ClassroomDetailPanel.this, "Failed to remove student: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -449,20 +526,49 @@ public class ClassroomDetailPanel extends JPanel {
         }
     }
 
-    class StudentCellRenderer extends DefaultListCellRenderer {
+    // --- NEW CUSTOM RENDERER for JList ---
+    class StudentCellRenderer extends JPanel implements ListCellRenderer<String> {
+        private final JLabel nameLabel = new JLabel();
+        final JButton deleteButton = new JButton("X"); // "Trash" button
         private final boolean isTeacher;
+
         public StudentCellRenderer(boolean isTeacher) {
             this.isTeacher = isTeacher;
+            setLayout(new BorderLayout(5, 5));
+            add(nameLabel, BorderLayout.CENTER);
+            
+            if (isTeacher) {
+                deleteButton.setForeground(Color.RED);
+                deleteButton.setMargin(new Insets(1, 4, 1, 4));
+                deleteButton.setFocusable(false); // Prevent button from stealing focus
+                deleteButton.setOpaque(false);
+                add(deleteButton, BorderLayout.EAST);
+            }
         }
 
         @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (isTeacher) {
-                setText(value + " (Double-click to remove)");
-                setForeground(Color.DARK_GRAY);
+        public Component getListCellRendererComponent(JList<? extends String> list, 
+                                                      String value, 
+                                                      int index, 
+                                                      boolean isSelected, 
+                                                      boolean cellHasFocus) {
+            nameLabel.setText(value);
+            deleteButton.setVisible(isTeacher); // Show button only for teachers
+
+            if (isSelected) {
+                setBackground(list.getSelectionBackground());
+                nameLabel.setForeground(list.getSelectionForeground());
+            } else {
+                setBackground(list.getBackground());
+                nameLabel.setForeground(list.getForeground());
             }
-            return c;
+            
+            setEnabled(list.isEnabled());
+            setFont(list.getFont());
+            setOpaque(true);
+
+            return this;
         }
     }
+    // --- END NEW RENDERER ---
 }

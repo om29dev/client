@@ -66,6 +66,25 @@ public class StudentDashboardPanel extends JPanel {
     }
 
     private void fetchClassrooms() {
+        loadingLabel.setVisible(true);
+        loadingLabel.setText("Loading classrooms...");
+
+        // Clear old classrooms before fetching
+        classroomGridPanel.removeAll();
+        
+        JPanel mainContent = (JPanel) getComponent(1);
+
+        // --- FIX: Remove old scrollpane and add loading label back ---
+        Component centerComponent = ((BorderLayout) mainContent.getLayout()).getLayoutComponent(BorderLayout.CENTER);
+        if (centerComponent != null && centerComponent instanceof JScrollPane) {
+            mainContent.remove(centerComponent);
+        }
+        mainContent.add(loadingLabel, BorderLayout.CENTER);
+        mainContent.revalidate();
+        mainContent.repaint();
+        // --- END FIX ---
+
+
         new SwingWorker<List<ClassroomDTO>, Void>() {
             @Override
             protected List<ClassroomDTO> doInBackground() throws Exception {
@@ -100,6 +119,14 @@ public class StudentDashboardPanel extends JPanel {
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
         JPanel mainContent = (JPanel) getComponent(1); // Get main content panel
+        
+        // --- FIX: Remove loading label before adding scroll pane ---
+        Component centerComponent = ((BorderLayout) mainContent.getLayout()).getLayoutComponent(BorderLayout.CENTER);
+        if (centerComponent != null && centerComponent == loadingLabel) {
+            mainContent.remove(loadingLabel);
+        }
+        // --- END FIX ---
+        
         mainContent.add(scrollPane, BorderLayout.CENTER);
 
         revalidate();
@@ -164,7 +191,15 @@ public class StudentDashboardPanel extends JPanel {
         JPanel mainContent = (JPanel) getComponent(1);
         loadingLabel.setText("No classrooms yet. Join one to get started!");
         loadingLabel.setVisible(true);
-        mainContent.add(loadingLabel, BorderLayout.CENTER);
+        
+        // --- FIX: Ensure loadingLabel is in the CENTER ---
+        Component centerComponent = ((BorderLayout) mainContent.getLayout()).getLayoutComponent(BorderLayout.CENTER);
+        if (centerComponent != null && centerComponent != loadingLabel) {
+            mainContent.remove(centerComponent);
+            mainContent.add(loadingLabel, BorderLayout.CENTER);
+        }
+        // --- END FIX ---
+        
         revalidate();
         repaint();
     }
@@ -174,7 +209,15 @@ public class StudentDashboardPanel extends JPanel {
         loadingLabel.setText("Error: " + message);
         loadingLabel.setForeground(Color.RED);
         loadingLabel.setVisible(true);
-        mainContent.add(loadingLabel, BorderLayout.CENTER);
+        
+        // --- FIX: Ensure loadingLabel is in the CENTER ---
+        Component centerComponent = ((BorderLayout) mainContent.getLayout()).getLayoutComponent(BorderLayout.CENTER);
+        if (centerComponent != null && centerComponent != loadingLabel) {
+            mainContent.remove(centerComponent);
+            mainContent.add(loadingLabel, BorderLayout.CENTER);
+        }
+        // --- END FIX ---
+        
         revalidate();
         repaint();
     }
