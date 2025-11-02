@@ -12,7 +12,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.List; // <-- ADDED THIS IMPORT
+import java.util.List;
 
 public class TestResultsPanel extends JPanel {
 
@@ -197,7 +197,7 @@ public class TestResultsPanel extends JPanel {
 
         // --- Split Pane for PDF and Answers ---
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setResizeWeight(0.6); // 60% to PDF
+        splitPane.setResizeWeight(0.7); // <-- UPDATED from 0.6 (70% to PDF)
         splitPane.setOpaque(false);
 
         // --- Left: PDF Viewer ---

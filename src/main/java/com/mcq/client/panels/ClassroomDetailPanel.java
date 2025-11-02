@@ -102,19 +102,15 @@ public class ClassroomDetailPanel extends JPanel {
         JPanel mainContent = (JPanel) getComponent(1); // Get main content panel
         mainContent.remove(loadingLabel); // Remove loading label
 
-        // --- THIS IS THE FIX ---
-        // Remove the old JSplitPane (or any other component) from the CENTER
-        // before adding the new one. This prevents UI breaking on refresh.
         BorderLayout layout = (BorderLayout) mainContent.getLayout();
         Component centerComponent = layout.getLayoutComponent(BorderLayout.CENTER);
         if (centerComponent != null) {
             mainContent.remove(centerComponent);
         }
-        // --- END FIX ---
 
         // Split Pane for Students and Tests
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setResizeWeight(0.3); // Give 30% to students list
+        splitPane.setResizeWeight(0.25);
         splitPane.setOpaque(false);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
 
@@ -156,13 +152,29 @@ public class ClassroomDetailPanel extends JPanel {
                 new EmptyBorder(15, 15, 15, 15)
         ));
 
+        JPanel infoTextPanel = new JPanel(); // New panel for text
+        infoTextPanel.setLayout(new BoxLayout(infoTextPanel, BoxLayout.Y_AXIS));
+        infoTextPanel.setOpaque(false);
+
         classroomNameLabel = new JLabel(classroom.classroomname());
         classroomNameLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
-        infoPanel.add(classroomNameLabel, BorderLayout.NORTH);
+        infoTextPanel.add(classroomNameLabel);
 
+        infoTextPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        // --- HIGHLIGHTED CODE ---
         classroomCodeLabel = new JLabel("Code: " + classroom.code());
-        classroomCodeLabel.setFont(new Font("Monospaced", Font.PLAIN, 14));
-        infoPanel.add(classroomCodeLabel, BorderLayout.CENTER);
+        classroomCodeLabel.setFont(new Font("Monospaced", Font.BOLD, 18));
+        classroomCodeLabel.setForeground(Color.BLACK);
+        classroomCodeLabel.setBackground(new Color(243, 244, 246)); // Gray-100
+        classroomCodeLabel.setOpaque(true);
+        classroomCodeLabel.setBorder(new EmptyBorder(5, 8, 5, 8));
+        classroomCodeLabel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align left
+        infoTextPanel.add(classroomCodeLabel);
+        // --- END HIGHLIGHT ---
+
+        infoPanel.add(infoTextPanel, BorderLayout.CENTER); // Add text panel to center
+
 
         if (authService.isTeacher()) {
             JButton uploadTestButton = new JButton("+ Upload Test");
@@ -217,7 +229,7 @@ public class ClassroomDetailPanel extends JPanel {
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY),
                 new EmptyBorder(15, 15, 15, 15)
         ));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100)); // Constrain height
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
         // Left side: Info
         JPanel info = new JPanel();
@@ -282,7 +294,6 @@ public class ClassroomDetailPanel extends JPanel {
 
         } else { // Student
             if (test.status().equals("ACTIVE")) {
-                // This button is a safeguard, but StudentViewPanel should catch active tests first
                 JButton take = new JButton("Take Test");
                 take.setBackground(new Color(37, 99, 235));
                 take.setForeground(Color.WHITE);
@@ -326,7 +337,6 @@ public class ClassroomDetailPanel extends JPanel {
                     try {
                         get();
                         studentListModel.removeElement(studentUsername);
-                        // Update title
                         ((TitledBorder)((JPanel)studentList.getParent().getParent()).getBorder())
                                 .setTitle("Students (" + studentListModel.getSize() + ")");
                         studentList.getParent().getParent().repaint();
@@ -347,7 +357,7 @@ public class ClassroomDetailPanel extends JPanel {
             }
             @Override
             protected void done() {
-                try { get(); fetchData(); } // Refresh everything
+                try { get(); fetchData(); }
                 catch (Exception e) { JOptionPane.showMessageDialog(ClassroomDetailPanel.this, "Failed to start test: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE); }
             }
         }.execute();
@@ -362,7 +372,7 @@ public class ClassroomDetailPanel extends JPanel {
             }
             @Override
             protected void done() {
-                try { get(); fetchData(); } // Refresh everything
+                try { get(); fetchData(); }
                 catch (Exception e) { JOptionPane.showMessageDialog(ClassroomDetailPanel.this, "Failed to end test: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE); }
             }
         }.execute();
@@ -380,14 +390,13 @@ public class ClassroomDetailPanel extends JPanel {
             }
             @Override
             protected void done() {
-                try { get(); fetchData(); } // Refresh everything
+                try { get(); fetchData(); }
                 catch (Exception e) { JOptionPane.showMessageDialog(ClassroomDetailPanel.this, "Failed to delete test: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE); }
             }
         }.execute();
     }
 
     private void handleCreateTest() {
-        // Create a custom dialog for test creation
         JTextField testNameField = new JTextField();
         JTextField answersField = new JTextField();
         JButton fileButton = new JButton("Select PDF");
@@ -419,7 +428,6 @@ public class ClassroomDetailPanel extends JPanel {
                     .filter(s -> !s.isEmpty())
                     .collect(java.util.stream.Collectors.toList());
 
-            // Validation
             Pattern answerPattern = Pattern.compile("^[A-D]$");
             if(name.isEmpty() || answers.isEmpty() || pdfFile[0] == null || answerList.stream().anyMatch(a -> !answerPattern.matcher(a).matches())) {
                 JOptionPane.showMessageDialog(this, "Invalid input. Check all fields.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -429,7 +437,6 @@ public class ClassroomDetailPanel extends JPanel {
             new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() throws Exception {
-                    // --- FIXED PARAMETER ORDER ---
                     apiClient.createTest(classroomCode, name, pdfFile[0], answerList);
                     return null;
                 }
@@ -442,7 +449,6 @@ public class ClassroomDetailPanel extends JPanel {
         }
     }
 
-    // Custom renderer to show a "delete" icon for teachers
     class StudentCellRenderer extends DefaultListCellRenderer {
         private final boolean isTeacher;
         public StudentCellRenderer(boolean isTeacher) {

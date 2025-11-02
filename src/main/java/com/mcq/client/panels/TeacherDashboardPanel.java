@@ -40,7 +40,7 @@ public class TeacherDashboardPanel extends JPanel {
         headerPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
 
         JLabel title = new JLabel("My Classrooms");
-        title.setFont(new Font("SansSerif", Font.BOLD, 30));
+        title.setFont(new Font("SansSerf", Font.BOLD, 30));
         headerPanel.add(title, BorderLayout.WEST);
 
         JButton createButton = new JButton("+ Create Classroom");
@@ -120,29 +120,12 @@ public class TeacherDashboardPanel extends JPanel {
     }
 
     private JPanel createClassroomCard(ClassroomDTO classroom) {
-        JPanel card = new JPanel(new BorderLayout(10, 10));
+        JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
                 new EmptyBorder(20, 20, 20, 20)
         ));
-
-        // Header
-        JPanel header = new JPanel(new BorderLayout());
-        header.setOpaque(false);
-        JLabel icon = new JLabel("B"); // Icon
-        icon.setOpaque(true);
-        icon.setBackground(new Color(220, 252, 231)); // Green-100
-        icon.setForeground(new Color(22, 163, 74)); // Green-600
-        icon.setFont(new Font("SansSerif", Font.BOLD, 18));
-        icon.setBorder(new EmptyBorder(8, 12, 8, 12));
-
-        JLabel code = new JLabel(classroom.code());
-        code.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        code.setForeground(Color.GRAY);
-
-        header.add(icon, BorderLayout.WEST);
-        header.add(code, BorderLayout.EAST);
 
         // Content
         JPanel content = new JPanel();
@@ -152,15 +135,25 @@ public class TeacherDashboardPanel extends JPanel {
         JLabel name = new JLabel(classroom.classroomname());
         name.setFont(new Font("SansSerif", Font.BOLD, 20));
 
+        // --- HIGHLIGHTED CODE ---
+        JLabel code = new JLabel(classroom.code());
+        code.setFont(new Font("Monospaced", Font.BOLD, 16));
+        code.setForeground(Color.BLACK);
+        code.setBackground(new Color(243, 244, 246)); // Gray-100
+        code.setOpaque(true);
+        code.setBorder(new EmptyBorder(5, 8, 5, 8));
+        // --- END HIGHLIGHT ---
+
         JLabel students = new JLabel(classroom.classroomstudents().size() + " students");
         students.setFont(new Font("SansSerif", Font.PLAIN, 14));
         students.setForeground(Color.GRAY);
 
         content.add(name);
-        content.add(Box.createRigidArea(new Dimension(0, 10)));
+        content.add(Box.createRigidArea(new Dimension(0, 8)));
+        content.add(code);
+        content.add(Box.createRigidArea(new Dimension(0, 12)));
         content.add(students);
 
-        card.add(header, BorderLayout.NORTH);
         card.add(content, BorderLayout.CENTER);
 
         card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
