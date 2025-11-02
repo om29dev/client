@@ -102,6 +102,16 @@ public class ClassroomDetailPanel extends JPanel {
         JPanel mainContent = (JPanel) getComponent(1); // Get main content panel
         mainContent.remove(loadingLabel); // Remove loading label
 
+        // --- THIS IS THE FIX ---
+        // Remove the old JSplitPane (or any other component) from the CENTER
+        // before adding the new one. This prevents UI breaking on refresh.
+        BorderLayout layout = (BorderLayout) mainContent.getLayout();
+        Component centerComponent = layout.getLayoutComponent(BorderLayout.CENTER);
+        if (centerComponent != null) {
+            mainContent.remove(centerComponent);
+        }
+        // --- END FIX ---
+
         // Split Pane for Students and Tests
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         splitPane.setResizeWeight(0.3); // Give 30% to students list

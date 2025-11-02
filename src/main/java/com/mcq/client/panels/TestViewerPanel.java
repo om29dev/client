@@ -1,6 +1,7 @@
 // src/main/java/com/mcq/client/panels/TestViewerPanel.java
 package com.mcq.client.panels;
 
+import com.mcq.client.Main; // <-- MODIFIED
 import com.mcq.client.lib.ApiClient;
 import com.mcq.client.lib.AuthService;
 import com.mcq.client.lib.Models.Test;
@@ -19,7 +20,9 @@ import java.util.stream.IntStream;
 
 public class TestViewerPanel extends JPanel {
 
-    private final SecureTestFrame secureFrame;
+    // --- MODIFIED ---
+    private final Main mainFrame; // Was SecureTestFrame
+    // --- END MODIFIED ---
     private final ApiClient apiClient;
     private final String classroomCode;
     private final String testname;
@@ -38,8 +41,10 @@ public class TestViewerPanel extends JPanel {
     private Timer pollingTimer;
     private boolean isSubmitting = false;
 
-    public TestViewerPanel(SecureTestFrame secureFrame, String classroomCode, String testname) {
-        this.secureFrame = secureFrame;
+    // --- MODIFIED CONSTRUCTOR ---
+    public TestViewerPanel(Main mainFrame, String classroomCode, String testname) {
+        this.mainFrame = mainFrame; // Was secureFrame
+        // --- END MODIFIED CONSTRUCTOR ---
         this.apiClient = ApiClient.getInstance();
         this.classroomCode = classroomCode;
         this.testname = testname;
@@ -179,8 +184,10 @@ public class TestViewerPanel extends JPanel {
                     get();
                     if (!test.status().equals("ACTIVE")) {
                         stopPolling();
-                        JOptionPane.showMessageDialog(secureFrame, "This test is no longer active.", "Test Ended", JOptionPane.INFORMATION_MESSAGE);
-                        secureFrame.exitTest();
+                        // --- MODIFIED ---
+                        JOptionPane.showMessageDialog(mainFrame, "This test is no longer active.", "Test Ended", JOptionPane.INFORMATION_MESSAGE);
+                        mainFrame.returnToMainWindow(); // Was secureFrame.exitTest()
+                        // --- END MODIFIED ---
                         return;
                     }
                     buildQuestionNav();
@@ -348,11 +355,26 @@ public class TestViewerPanel extends JPanel {
             @Override
             protected void done() {
                 if (!isLockout) {
-                    JOptionPane.showMessageDialog(secureFrame,
+                    // --- MODIFIED ---
+                    JOptionPane.showMessageDialog(mainFrame,
                             "The test has been ended by the teacher. Your answers are submitted.",
                             "Test Ended",
                             JOptionPane.INFORMATION_MESSAGE);
-                    secureFrame.exitTest();
+                    mainFrame.returnToMainWindow(); // Was secureFrame.exitTest()
+                    // --- END MODIFIED ---
+                }
+                // If it IS a lockout, the SecureTestFrame was handling it.
+                // Since SecureTestFrame is gone, we must also handle the lockout case.
+                else {
+                    // --- ADDED ---
+                    JOptionPane.showMessageDialog(
+                            mainFrame,
+                            "You have been locked out. Your results are submitted.",
+                            "Test Locked",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                    mainFrame.returnToMainWindow();
+                    // --- END ADDED ---
                 }
             }
         }.execute();
