@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import com.mcq.client.lib.Models.*;
 
 import java.io.IOException;
+import java.io.InputStream; // <-- ADDED
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.URI;
@@ -16,16 +17,37 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties; // <-- ADDED
 
 // Singleton for all API calls
 public class ApiClient {
 
     private static ApiClient instance;
-    private final String API_BASE_URL = "http://localhost:8080"; // From .env.example
+    private final String API_BASE_URL; // <-- MODIFIED (Removed hardcoding)
     private final HttpClient httpClient;
     private final Gson gson;
 
     private ApiClient() {
+        // --- MODIFIED: Load API_BASE_URL from properties ---
+        Properties props = new Properties();
+        String baseUrl;
+        try (InputStream in = ApiClient.class.getClassLoader().getResourceAsStream("application.properties")) {
+            if (in != null) {
+                props.load(in);
+                // The property key in application.properties should be 'api.base.url'
+                baseUrl = props.getProperty("api.base.url", "http://localhost:8080");
+            } else {
+                System.err.println("WARNING: application.properties not found. Defaulting to localhost:8080");
+                baseUrl = "http://localhost:8080";
+            }
+        } catch (IOException e) {
+            System.err.println("ERROR: Failed to load application.properties. Defaulting to localhost:8080");
+            e.printStackTrace();
+            baseUrl = "http://localhost:8080";
+        }
+        this.API_BASE_URL = baseUrl;
+        // --- END MODIFICATION ---
+
         // Enable cookie management to maintain session
         CookieHandler.setDefault(new CookieManager());
 

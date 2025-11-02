@@ -12,6 +12,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Collections; // <-- ADDED
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,8 +33,10 @@ public class TestViewerPanel extends JPanel {
     private int currentPage = 0;
     private Map<Integer, String> answers = new HashMap<>();
     private int totalQuestions = 0;
+    private List<Integer> questionOrder; // <-- ADDED: For shuffling
 
     private JLabel pdfLabel;
+    private JScrollPane pdfScrollPane; // <-- ADDED: For scrollbar
     private JLabel pageLabel;
     private JButton prevButton, nextButton;
     private JPanel answerButtonPanel;
@@ -69,7 +72,12 @@ public class TestViewerPanel extends JPanel {
         pdfLabel.setFont(new Font("SansSerif", Font.PLAIN, 24));
         pdfLabel.setOpaque(true);
         pdfLabel.setBackground(Color.WHITE);
-        pdfLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        // pdfLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY)); // <-- REMOVED
+
+        // --- MODIFICATION: Add JScrollPane for PDF ---
+        pdfScrollPane = new JScrollPane(pdfLabel);
+        pdfScrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        // --- END MODIFICATION ---
 
         JPanel pdfControls = new JPanel(new BorderLayout());
         pdfControls.setOpaque(false);
@@ -82,7 +90,8 @@ public class TestViewerPanel extends JPanel {
         pdfControls.add(nextButton, BorderLayout.EAST);
 
         pdfViewerPanel.add(pdfControls, BorderLayout.NORTH);
-        pdfViewerPanel.add(pdfLabel, BorderLayout.CENTER);
+        // pdfViewerPanel.add(pdfLabel, BorderLayout.CENTER); // <-- OLD
+        pdfViewerPanel.add(pdfScrollPane, BorderLayout.CENTER); // <-- NEW
 
         // --- Bottom Answer Panel ---
         answerButtonPanel = new JPanel(new GridLayout(1, 4, 10, 10));
@@ -175,6 +184,12 @@ public class TestViewerPanel extends JPanel {
                 test = apiClient.getTest(classroomCode, testname);
                 pdfData = apiClient.getTestPDF(classroomCode, testname);
                 totalQuestions = test.questionCount();
+
+                // --- MODIFICATION: Create shuffled question order ---
+                questionOrder = IntStream.range(0, totalQuestions).boxed().collect(Collectors.toList());
+                Collections.shuffle(questionOrder);
+                // --- END MODIFICATION ---
+
                 return null;
             }
 
@@ -200,6 +215,18 @@ public class TestViewerPanel extends JPanel {
         }.execute();
     }
 
+    /**
+     * Gets the original PDF page index (question number) for the current view index.
+     * @param viewIndex The index of the question in the shuffled view (e.g., 0 for "Question 1")
+     * @return The original, unshuffled page index (e.g., 7)
+     */
+    private int getRealQuestionIndex(int viewIndex) {
+        if (questionOrder == null || viewIndex < 0 || viewIndex >= questionOrder.size()) {
+            return viewIndex; // Fallback
+        }
+        return questionOrder.get(viewIndex);
+    }
+
     private void navigatePage(int newPage) {
         if (newPage >= 0 && newPage < totalQuestions) {
             renderPage(newPage);
@@ -208,6 +235,8 @@ public class TestViewerPanel extends JPanel {
 
     private void renderPage(int pageIndex) {
         currentPage = pageIndex;
+        // --- ADDED: Get the *real* question index from the shuffled list ---
+        final int realQuestionIndex = getRealQuestionIndex(currentPage);
 
         // Update labels
         pageLabel.setText("Question " + (currentPage + 1) + " of " + totalQuestions);
@@ -218,8 +247,14 @@ public class TestViewerPanel extends JPanel {
         new SwingWorker<ImageIcon, Void>() {
             @Override
             protected ImageIcon doInBackground() {
-                int targetWidth = pdfLabel.getWidth() > 0 ? pdfLabel.getWidth() - 10 : 800;
-                return PdfUtil.getScaledPdfPage(pdfData, currentPage, targetWidth);
+                // --- MODIFICATION: Get width from scroll pane's viewport ---
+                int targetWidth = pdfScrollPane.getViewport().getWidth() > 0 ? pdfScrollPane.getViewport().getWidth() - 10 : 800;
+                if (targetWidth <= 0) targetWidth = 800; // Fallback
+                // --- END MODIFICATION ---
+
+                // --- MODIFICATION: Use realQuestionIndex to fetch page ---
+                return PdfUtil.getScaledPdfPage(pdfData, realQuestionIndex, targetWidth);
+                // --- END MODIFICATION ---
             }
 
             @Override
@@ -228,6 +263,9 @@ public class TestViewerPanel extends JPanel {
                     ImageIcon image = get();
                     pdfLabel.setText(null);
                     pdfLabel.setIcon(image);
+                    // --- ADDED: Scroll to top of new page ---
+                    SwingUtilities.invokeLater(() -> pdfScrollPane.getVerticalScrollBar().setValue(0));
+                    // --- END ADDED ---
                 } catch (Exception e) {
                     pdfLabel.setIcon(null);
                     pdfLabel.setText("Failed to render page " + (currentPage + 1));
@@ -241,13 +279,19 @@ public class TestViewerPanel extends JPanel {
 
     private void selectAnswer(String answer) {
         if (isSubmitting) return;
-        answers.put(currentPage, answer);
+
+        // --- MODIFICATION: Store answer against the *real* question index ---
+        answers.put(getRealQuestionIndex(currentPage), answer);
+        // --- END MODIFICATION ---
+
         updateAnswerButtons();
         updateQuestionNavHighlight();
 
         // Auto-navigate to next unanswered question
         for (int i = currentPage + 1; i < totalQuestions; i++) {
-            if (!answers.containsKey(i)) {
+            // --- MODIFICATION: Check answer map using real index ---
+            if (!answers.containsKey(getRealQuestionIndex(i))) {
+                // --- END MODIFICATION ---
                 navigatePage(i);
                 return;
             }
@@ -259,7 +303,10 @@ public class TestViewerPanel extends JPanel {
     }
 
     private void updateAnswerButtons() {
-        String selected = answers.get(currentPage);
+        // --- MODIFICATION: Get selected answer using real question index ---
+        String selected = answers.get(getRealQuestionIndex(currentPage));
+        // --- END MODIFICATION ---
+
         for (Component comp : answerButtonPanel.getComponents()) {
             JButton btn = (JButton) comp;
             if (btn.getText().equals(selected)) {
@@ -288,7 +335,10 @@ public class TestViewerPanel extends JPanel {
     private void updateQuestionNavHighlight() {
         for (int i = 0; i < questionNavPanel.getComponentCount(); i++) {
             JButton btn = (JButton) questionNavPanel.getComponent(i);
-            if (answers.containsKey(i)) {
+            // --- MODIFICATION: Check answer map using real index ---
+            int realQuestionIndex = getRealQuestionIndex(i);
+            if (answers.containsKey(realQuestionIndex)) {
+                // --- END MODIFICATION ---
                 btn.setBackground(new Color(22, 163, 74)); // Green
                 btn.setForeground(Color.WHITE);
             } else if (i == currentPage) {
@@ -341,6 +391,10 @@ public class TestViewerPanel extends JPanel {
         isSubmitting = true;
         stopPolling();
 
+        // This logic is correct. It iterates from 0 to N (the *original* question
+        // indices) and pulls the answer from the map, which we've keyed by the
+        // original question index. This correctly "un-shuffles" the answers
+        // for submission.
         List<String> answersArray = IntStream.range(0, totalQuestions)
                 .mapToObj(i -> answers.getOrDefault(i, ""))
                 .collect(Collectors.toList());
