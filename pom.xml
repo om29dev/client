@@ -44,7 +44,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.mcq.client.Main</mainClass> <!-- Replace with your main class -->
+                                    <mainClass>com.mcq.client.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
