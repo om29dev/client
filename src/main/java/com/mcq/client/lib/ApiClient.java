@@ -1,4 +1,3 @@
-// src/main/java/com/mcq/client/lib/ApiClient.java
 package com.mcq.client.lib;
 
 import com.google.gson.Gson;
@@ -6,7 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import com.mcq.client.lib.Models.*;
 
 import java.io.IOException;
-import java.io.InputStream; // <-- ADDED
+import java.io.InputStream;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.URI;
@@ -17,24 +16,21 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties; // <-- ADDED
+import java.util.Properties;
 
-// Singleton for all API calls
 public class ApiClient {
 
     private static ApiClient instance;
-    private final String API_BASE_URL; // <-- MODIFIED (Removed hardcoding)
+    private final String API_BASE_URL;
     private final HttpClient httpClient;
     private final Gson gson;
 
     private ApiClient() {
-        // --- MODIFIED: Load API_BASE_URL from properties ---
         Properties props = new Properties();
         String baseUrl;
         try (InputStream in = ApiClient.class.getClassLoader().getResourceAsStream("application.properties")) {
             if (in != null) {
                 props.load(in);
-                // The property key in application.properties should be 'api.base.url'
                 baseUrl = props.getProperty("api.base.url", "http://localhost:8080");
             } else {
                 System.err.println("WARNING: application.properties not found. Defaulting to localhost:8080");
@@ -46,9 +42,7 @@ public class ApiClient {
             baseUrl = "http://localhost:8080";
         }
         this.API_BASE_URL = baseUrl;
-        // --- END MODIFICATION ---
 
-        // Enable cookie management to maintain session
         CookieHandler.setDefault(new CookieManager());
 
         this.httpClient = HttpClient.newBuilder()
@@ -82,7 +76,6 @@ public class ApiClient {
             HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
 
             if (response.statusCode() >= 400) {
-                // Try to parse error message
                 try {
                     ApiError error = gson.fromJson(response.body(), ApiError.class);
                     if (error != null && error.message() != null) {
@@ -99,7 +92,6 @@ public class ApiClient {
                 return null;
             }
 
-            // Fix for the java.lang.Void error
             if (responseType.getType() == Void.class) {
                 return null;
             }
@@ -107,17 +99,13 @@ public class ApiClient {
             return gson.fromJson(response.body(), responseType);
 
         } catch (Exception e) {
-            // --- THIS IS THE FIX ---
-            // Add a null check before calling .contains()
             if (e.getMessage() != null && e.getMessage().contains("java.lang.Void")) {
                 throw new Exception("Gson deserialization error: " + e.getMessage(), e);
             }
-            // --- END FIX ---
             throw new Exception("API request failed: " + e.getMessage(), e);
         }
     }
 
-    // --- Auth ---
     public void login(String username, String password) throws Exception {
         request("/api/auth/login", "POST", new LoginRequest(username, password), new TypeToken<Void>() {});
     }
@@ -134,7 +122,6 @@ public class ApiClient {
         return request("/api/users/" + username, "GET", null, new TypeToken<User>() {});
     }
 
-    // --- Classrooms ---
     public List<ClassroomDTO> getClassrooms(String filter) throws Exception {
         String query = (filter != null) ? "?filter=" + filter : "";
         return request("/api/classrooms" + query, "GET", null, new TypeToken<List<ClassroomDTO>>() {});
@@ -156,7 +143,6 @@ public class ApiClient {
         request("/api/classrooms/" + code + "/remove/" + studentUsername, "DELETE", null, new TypeToken<Void>() {});
     }
 
-    // --- Tests ---
     public List<Test> getTests(String classroomCode) throws Exception {
         return request("/api/classrooms/" + classroomCode + "/tests", "GET", null, new TypeToken<List<Test>>() {});
     }
@@ -195,11 +181,9 @@ public class ApiClient {
         request("/api/classrooms/" + classroomCode + "/tests/" + testname + "/submissions/submit", "POST", answers, new TypeToken<Void>() {});
     }
 
-    // --- NEW METHOD FOR AUTO-SAVE ---
     public void updateTestAnswers(String classroomCode, String testname, List<String> answers) throws Exception {
         request("/api/classrooms/" + classroomCode + "/tests/" + testname + "/submissions/update", "POST", answers, new TypeToken<Void>() {});
     }
-    // --- END NEW METHOD ---
 
     public Test getActiveTestForStudent() throws Exception {
         return request("/api/classrooms/student/active-test", "GET", null, new TypeToken<Test>() {});
@@ -213,7 +197,6 @@ public class ApiClient {
         return request("/api/classrooms/" + classroomCode + "/tests/" + testname + "/submissions", "GET", null, new TypeToken<TeacherResultsDTO>() {});
     }
 
-    // This method is special as it handles FormData, not JSON
     public Test createTest(String classroomCode, String testname, java.io.File pdfFile, List<String> correctAnswers) throws Exception {
         String boundary = "Boundary-" + System.currentTimeMillis();
         HttpRequest request = HttpRequest.newBuilder()
@@ -236,31 +219,26 @@ public class ApiClient {
         return gson.fromJson(response.body(), Test.class);
     }
 
-    // Helper for createTest to build the multipart body
     private HttpRequest.BodyPublisher ofMimeMultipartData(String testname, java.io.File pdfFile, List<String> correctAnswers, String boundary) throws IOException {
         var byteArrays = new java.util.ArrayList<byte[]>();
         String crlf = "\r\n";
 
-        // Test name part
         byteArrays.add(("--" + boundary + crlf).getBytes());
         byteArrays.add(("Content-Disposition: form-data; name=\"testname\"" + crlf + crlf).getBytes());
         byteArrays.add((testname + crlf).getBytes());
 
-        // PDF file part
         byteArrays.add(("--" + boundary + crlf).getBytes());
         byteArrays.add(("Content-Disposition: form-data; name=\"pdfFile\"; filename=\"" + pdfFile.getName() + "\"" + crlf).getBytes());
         byteArrays.add(("Content-Type: application/pdf" + crlf + crlf).getBytes());
         byteArrays.add(java.nio.file.Files.readAllBytes(pdfFile.toPath()));
         byteArrays.add((crlf).getBytes());
 
-        // Correct answers parts
         for (String answer : correctAnswers) {
             byteArrays.add(("--" + boundary + crlf).getBytes());
             byteArrays.add(("Content-Disposition: form-data; name=\"correctAnswers\"" + crlf + crlf).getBytes());
             byteArrays.add((answer + crlf).getBytes());
         }
 
-        // End boundary
         byteArrays.add(("--" + boundary + "--" + crlf).getBytes());
 
         return HttpRequest.BodyPublishers.ofByteArrays(byteArrays);

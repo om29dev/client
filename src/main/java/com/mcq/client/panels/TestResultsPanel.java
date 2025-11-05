@@ -1,4 +1,3 @@
-// src/main/java/com/mcq/client/panels/TestResultsPanel.java
 package com.mcq.client.panels;
 
 import com.mcq.client.Main;
@@ -34,15 +33,12 @@ public class TestResultsPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(new Color(248, 250, 252));
 
-        // Navbar
         add(new NavbarPanel(), BorderLayout.NORTH);
 
-        // Main content
         JPanel mainContent = new JPanel(new BorderLayout(10, 10));
         mainContent.setOpaque(false);
         mainContent.setBorder(new EmptyBorder(20, 40, 20, 40));
 
-        // Back button
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setOpaque(false);
         JButton backButton = new JButton("< Back to Classroom");
@@ -77,7 +73,7 @@ public class TestResultsPanel extends JPanel {
             @Override
             protected void done() {
                 loadingLabel.setVisible(false);
-                JPanel mainContent = (JPanel) getComponent(1); // Get main content panel
+                JPanel mainContent = (JPanel) getComponent(1);
                 try {
                     Object results = get();
                     if (authService.isTeacher()) {
@@ -104,7 +100,6 @@ public class TestResultsPanel extends JPanel {
         JPanel teacherPanel = new JPanel(new BorderLayout(10, 10));
         teacherPanel.setOpaque(false);
 
-        // --- Header Stats ---
         double avgScore = results.submissions().isEmpty() ? 0 :
                 results.submissions().stream().mapToDouble(Models.StudentResultDTO::score).average().orElse(0);
 
@@ -127,14 +122,12 @@ public class TestResultsPanel extends JPanel {
 
         teacherPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // --- Results Table ---
         String[] columnNames = new String[results.totalQuestions() + 2];
         columnNames[0] = "Student";
         columnNames[1] = "Score";
         for (int i = 0; i < results.totalQuestions(); i++) {
-            // Fix: Check if correctAnswers list is long enough
             String correctAns = (results.correctAnswers() != null && i < results.correctAnswers().size()) ? results.correctAnswers().get(i) : "?";
-            columnNames[i+2] = "Q" + (i + 1) + " (" + correctAns + ")"; // <-- FIXED
+            columnNames[i+2] = "Q" + (i + 1) + " (" + correctAns + ")";
         }
 
         Object[][] data = new Object[results.submissions().size()][columnNames.length];
@@ -173,7 +166,6 @@ public class TestResultsPanel extends JPanel {
         JPanel studentPanel = new JPanel(new BorderLayout(10, 10));
         studentPanel.setOpaque(false);
 
-        // --- Header ---
         double scorePercent = (result.totalQuestions() > 0) ? (double) result.score() / result.totalQuestions() * 100 : 0.0;
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
@@ -195,12 +187,10 @@ public class TestResultsPanel extends JPanel {
 
         studentPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // --- Split Pane for PDF and Answers ---
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setResizeWeight(0.7); // <-- UPDATED from 0.6 (70% to PDF)
+        splitPane.setResizeWeight(0.7);
         splitPane.setOpaque(false);
 
-        // --- Left: PDF Viewer ---
         JPanel pdfPanel = new JPanel(new BorderLayout());
         pdfPanel.setOpaque(false);
         JLabel pdfLabel = new JLabel("Loading PDF...");
@@ -210,7 +200,6 @@ public class TestResultsPanel extends JPanel {
         new SwingWorker<byte[], Void>() {
             @Override
             protected byte[] doInBackground() throws Exception {
-                // Use classroomCode, not username, to get PDF
                 return apiClient.getTestPDF(classroomCode, testname);
             }
             @Override
@@ -221,8 +210,7 @@ public class TestResultsPanel extends JPanel {
                     for(int i = 0; i < result.totalQuestions(); i++) {
                         JLabel pageLabel = new JLabel();
                         pageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-                        // Get width of the parent component
-                        int parentWidth = Math.max(splitPane.getLeftComponent().getWidth() - 40, 400); // 400 default
+                        int parentWidth = Math.max(splitPane.getLeftComponent().getWidth() - 40, 400);
                         ImageIcon icon = PdfUtil.getScaledPdfPage(pdfData, i, parentWidth);
                         pageLabel.setIcon(icon);
                         pdfTabs.addTab("Q " + (i+1), new JScrollPane(pageLabel));
@@ -237,7 +225,6 @@ public class TestResultsPanel extends JPanel {
             }
         }.execute();
 
-        // --- Right: Answer Key ---
         JPanel answerListPanel = new JPanel();
         answerListPanel.setLayout(new BoxLayout(answerListPanel, BoxLayout.Y_AXIS));
         answerListPanel.setBackground(Color.WHITE);
@@ -249,9 +236,9 @@ public class TestResultsPanel extends JPanel {
 
             JPanel answerCard = new JPanel();
             answerCard.setLayout(new BoxLayout(answerCard, BoxLayout.Y_AXIS));
-            answerCard.setBackground(isCorrect ? new Color(240, 253, 244) : new Color(254, 242, 242)); // Green/Red-50
+            answerCard.setBackground(isCorrect ? new Color(240, 253, 244) : new Color(254, 242, 242));
             answerCard.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(isCorrect ? new Color(134, 239, 172) : new Color(254, 202, 202), 2), // Green/Red-200
+                    BorderFactory.createLineBorder(isCorrect ? new Color(134, 239, 172) : new Color(254, 202, 202), 2),
                     new EmptyBorder(10, 10, 10, 10)
             ));
 
@@ -278,7 +265,7 @@ public class TestResultsPanel extends JPanel {
         JScrollPane answerScrollPane = new JScrollPane(answerListPanel);
         answerScrollPane.setBorder(BorderFactory.createTitledBorder("Your Results"));
 
-        splitPane.setLeftComponent(pdfPanel); // Removed JScrollPane, added to tabs
+        splitPane.setLeftComponent(pdfPanel);
         splitPane.setRightComponent(answerScrollPane);
 
         studentPanel.add(splitPane, BorderLayout.CENTER);
@@ -287,12 +274,10 @@ public class TestResultsPanel extends JPanel {
         repaint();
     }
 
-    // Custom renderer for the teacher's table
     class TeacherCellRenderer extends DefaultTableCellRenderer {
-        // Use java.util.List explicitly to avoid import collision with java.awt.List
         private final java.util.List<String> correctAnswers;
 
-        public TeacherCellRenderer(java.util.List<String> correctAnswers) { // <-- FIXED
+        public TeacherCellRenderer(java.util.List<String> correctAnswers) {
             this.correctAnswers = correctAnswers;
             setHorizontalAlignment(SwingConstants.CENTER);
         }
@@ -303,21 +288,20 @@ public class TestResultsPanel extends JPanel {
             c.setBackground(Color.WHITE);
             c.setForeground(Color.BLACK);
 
-            if (col > 1) { // Answer columns
+            if (col > 1) {
                 String userAnswer = (String) value;
-                // Check correctAnswers is not null and index is valid
                 if (correctAnswers != null && col - 2 < correctAnswers.size()) {
-                    String correctAnswer = correctAnswers.get(col - 2); // <-- FIXED
+                    String correctAnswer = correctAnswers.get(col - 2);
                     if (userAnswer.equals(correctAnswer)) {
-                        c.setForeground(new Color(22, 163, 74)); // Green
+                        c.setForeground(new Color(22, 163, 74));
                         c.setFont(new Font("SansSerif", Font.BOLD, 14));
                     } else if (!userAnswer.equals("-")) {
-                        c.setForeground(new Color(220, 38, 38)); // Red
+                        c.setForeground(new Color(220, 38, 38));
                     } else {
                         c.setForeground(Color.GRAY);
                     }
                 }
-            } else if (col == 1) { // Score column
+            } else if (col == 1) {
                 c.setFont(new Font("SansSerif", Font.BOLD, 14));
             }
 

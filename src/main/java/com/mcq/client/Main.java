@@ -1,4 +1,3 @@
-// src/main/java/com/mcq/client/Main.java
 package com.mcq.client;
 
 import com.mcq.client.lib.AuthService;
@@ -20,44 +19,34 @@ public class Main extends JFrame {
     private TestResultsPanel testResultsPanel;
     private TestViewerPanel testViewerPanel;
 
-    private GraphicsDevice gd; // <-- MODIFIED: Promoted to class field
+    private GraphicsDevice gd;
 
     public Main() {
         setTitle("MCQ Test Platform");
 
-        // --- MODIFICATIONS FOR FULLSCREEN ---
-        setUndecorated(true); // Remove window borders and title bar
+        setUndecorated(true);
         setAlwaysOnTop(true);
 
-        // --- MODIFIED: Initialize class field 'gd' ---
         gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         if (gd.isFullScreenSupported()) {
-            gd.setFullScreenWindow(this); // Set to full-screen
+            gd.setFullScreenWindow(this);
         } else {
             System.err.println("Full-screen mode not supported.");
-            setSize(getToolkit().getScreenSize()); // Fallback to maximized
+            setSize(getToolkit().getScreenSize());
         }
-        // --- END MODIFICATIONS ---
 
         setMinimumSize(new Dimension(1024, 768));
 
-        // This prevents Alt+F4 or other system-level close commands
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        // --- KIOSK MODIFICATIONS ---
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowIconified(WindowEvent e) {
-                // --- THIS IS THE FIX ---
-                // When minimized (e.g., Win+D), the OS exits full-screen.
-                // We must re-assert it.
-                // We use invokeLater to let the minimize animation finish,
-                // which prevents the "flicker" and "short" window.
                 SwingUtilities.invokeLater(() -> {
                     if (gd != null && gd.isFullScreenSupported()) {
-                        gd.setFullScreenWindow(Main.this); // Re-enter full-screen
+                        gd.setFullScreenWindow(Main.this);
                     } else {
-                        setState(Frame.NORMAL); // Fallback
+                        setState(Frame.NORMAL);
                         setExtendedState(JFrame.MAXIMIZED_BOTH);
                     }
                     toFront();
@@ -65,26 +54,20 @@ public class Main extends JFrame {
                 });
             }
         });
-        // --- END KIOSK MODIFICATIONS ---
 
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
-        // Create panels
         loginPanel = new LoginPanel(this);
         registerPanel = new RegisterPanel(this);
 
-        // Add panels to the main card layout
         mainPanel.add(loginPanel, "LOGIN");
         mainPanel.add(registerPanel, "REGISTER");
-        // Dashboard panels will be created and added when user logs in
 
         add(mainPanel);
 
-        // Listen to auth changes
         AuthService.getInstance().addPropertyChangeListener(evt -> {
             if ("user".equals(evt.getPropertyName())) {
-                // Clear old panels on auth change
                 if (studentViewPanel != null) mainPanel.remove(studentViewPanel);
                 if (teacherDashboardPanel != null) mainPanel.remove(teacherDashboardPanel);
                 if (classroomDetailPanel != null) mainPanel.remove(classroomDetailPanel);
@@ -108,7 +91,6 @@ public class Main extends JFrame {
             }
         });
 
-        // Show initial panel
         showLogin();
     }
 
@@ -134,7 +116,6 @@ public class Main extends JFrame {
             }
             cardLayout.show(mainPanel, "TEACHER_DASHBOARD");
         } else {
-            // Student dashboard logic is more complex due to active test checking
             studentViewPanel = new StudentViewPanel(this);
             mainPanel.add(studentViewPanel, "STUDENT_VIEW");
             cardLayout.show(mainPanel, "STUDENT_VIEW");
@@ -151,12 +132,10 @@ public class Main extends JFrame {
     }
 
     public void showTestViewer(String classroomCode, String testname) {
-        // The secure test environment is now just another panel in the main CardLayout
         if (testViewerPanel != null) {
             testViewerPanel.stopPolling();
             mainPanel.remove(testViewerPanel);
         }
-        // Pass 'this' (the Main frame) to the panel's constructor
         testViewerPanel = new TestViewerPanel(this, classroomCode, testname);
         mainPanel.add(testViewerPanel, "TEST_VIEWER");
         cardLayout.show(mainPanel, "TEST_VIEWER");
@@ -171,17 +150,14 @@ public class Main extends JFrame {
         cardLayout.show(mainPanel, "TEST_RESULTS");
     }
 
-    // Called by TestViewerPanel when it closes
     public void returnToMainWindow() {
         this.setVisible(true);
         this.toFront();
         this.requestFocus();
-        // Refresh dashboard to show test is over
         showDashboard();
     }
 
     public static void main(String[] args) {
-        // Set a modern Look and Feel (Nimbus)
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -190,10 +166,8 @@ public class Main extends JFrame {
                 }
             }
         } catch (Exception e) {
-            // If Nimbus is not available, fall back to default
         }
 
-        // Set global font styles to match the web app
         UIManager.put("Label.font", new Font("SansSerif", Font.PLAIN, 14));
         UIManager.put("Button.font", new Font("SansSerif", Font.BOLD, 14));
         UIManager.put("TextField.font", new Font("SansSerif", Font.PLAIN, 14));

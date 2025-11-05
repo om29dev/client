@@ -1,9 +1,7 @@
-// src/main/java/com/mcq/client/lib/Models.java
 package com.mcq.client.lib;
 
 import java.util.List;
 
-// Using records for immutable data transfer objects
 public class Models {
 
     public record User(
@@ -57,6 +55,5 @@ public class Models {
             List<StudentResultDTO> submissions
     ) {}
 
-    // For parsing JSON error messages from the server
     public record ApiError(String message) {}
 }

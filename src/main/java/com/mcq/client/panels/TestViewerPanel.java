@@ -1,7 +1,6 @@
-// src/main/java/com/mcq/client/panels/TestViewerPanel.java
 package com.mcq.client.panels;
 
-import com.mcq.client.Main; // <-- MODIFIED
+import com.mcq.client.Main;
 import com.mcq.client.lib.ApiClient;
 import com.mcq.client.lib.AuthService;
 import com.mcq.client.lib.Models.Test;
@@ -12,18 +11,16 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.Collections; // <-- ADDED
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors; // <-- ADDED
-import java.util.stream.IntStream; // <-- ADDED
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class TestViewerPanel extends JPanel {
 
-    // --- MODIFIED ---
-    private final Main mainFrame; // Was SecureTestFrame
-    // --- END MODIFIED ---
+    private final Main mainFrame;
     private final ApiClient apiClient;
     private final String classroomCode;
     private final String testname;
@@ -33,10 +30,10 @@ public class TestViewerPanel extends JPanel {
     private int currentPage = 0;
     private Map<Integer, String> answers = new HashMap<>();
     private int totalQuestions = 0;
-    private List<Integer> questionOrder; // <-- ADDED: For shuffling
+    private List<Integer> questionOrder;
 
     private JLabel pdfLabel;
-    private JScrollPane pdfScrollPane; // <-- ADDED: For scrollbar
+    private JScrollPane pdfScrollPane;
     private JLabel pageLabel;
     private JButton prevButton, nextButton;
     private JPanel answerButtonPanel;
@@ -44,16 +41,14 @@ public class TestViewerPanel extends JPanel {
     private Timer pollingTimer;
     private boolean isSubmitting = false;
 
-    // --- MODIFIED CONSTRUCTOR ---
     public TestViewerPanel(Main mainFrame, String classroomCode, String testname) {
-        this.mainFrame = mainFrame; // Was secureFrame
-        // --- END MODIFIED CONSTRUCTOR ---
+        this.mainFrame = mainFrame;
         this.apiClient = ApiClient.getInstance();
         this.classroomCode = classroomCode;
         this.testname = testname;
 
         setLayout(new BorderLayout(10, 10));
-        setBackground(new Color(248, 250, 252)); // Gray-50
+        setBackground(new Color(248, 250, 252));
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
         createUI();
@@ -61,10 +56,8 @@ public class TestViewerPanel extends JPanel {
     }
 
     private void createUI() {
-        // --- Top Nav (locked) ---
         add(createLockedNavbar(), BorderLayout.NORTH);
 
-        // --- Center PDF View ---
         JPanel pdfViewerPanel = new JPanel(new BorderLayout(10, 10));
         pdfViewerPanel.setOpaque(false);
 
@@ -72,12 +65,9 @@ public class TestViewerPanel extends JPanel {
         pdfLabel.setFont(new Font("SansSerif", Font.PLAIN, 24));
         pdfLabel.setOpaque(true);
         pdfLabel.setBackground(Color.WHITE);
-        // pdfLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY)); // <-- REMOVED
 
-        // --- MODIFICATION: Add JScrollPane for PDF ---
         pdfScrollPane = new JScrollPane(pdfLabel);
         pdfScrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-        // --- END MODIFICATION ---
 
         JPanel pdfControls = new JPanel(new BorderLayout());
         pdfControls.setOpaque(false);
@@ -90,10 +80,8 @@ public class TestViewerPanel extends JPanel {
         pdfControls.add(nextButton, BorderLayout.EAST);
 
         pdfViewerPanel.add(pdfControls, BorderLayout.NORTH);
-        // pdfViewerPanel.add(pdfLabel, BorderLayout.CENTER); // <-- OLD
-        pdfViewerPanel.add(pdfScrollPane, BorderLayout.CENTER); // <-- NEW
+        pdfViewerPanel.add(pdfScrollPane, BorderLayout.CENTER);
 
-        // --- Bottom Answer Panel ---
         answerButtonPanel = new JPanel(new GridLayout(1, 4, 10, 10));
         answerButtonPanel.setOpaque(false);
         answerButtonPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
@@ -108,12 +96,11 @@ public class TestViewerPanel extends JPanel {
 
         add(pdfViewerPanel, BorderLayout.CENTER);
 
-        // --- Right Question Navigator ---
         JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
         rightPanel.setOpaque(false);
         rightPanel.setPreferredSize(new Dimension(280, 0));
 
-        questionNavPanel = new JPanel(new GridLayout(0, 5, 5, 5)); // 5 columns
+        questionNavPanel = new JPanel(new GridLayout(0, 5, 5, 5));
         questionNavPanel.setOpaque(false);
 
         JScrollPane navScrollPane = new JScrollPane(questionNavPanel);
@@ -122,9 +109,9 @@ public class TestViewerPanel extends JPanel {
 
         JPanel infoBox = new JPanel();
         infoBox.setLayout(new BoxLayout(infoBox, BoxLayout.Y_AXIS));
-        infoBox.setBackground(new Color(227, 242, 253)); // Blue-50
+        infoBox.setBackground(new Color(227, 242, 253));
         infoBox.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(147, 197, 253)), // Blue-200
+                BorderFactory.createLineBorder(new Color(147, 197, 253)),
                 new EmptyBorder(10,10,10,10)
         ));
         JLabel infoLabel = new JLabel("<html>Your answers are being saved. The test will submit automatically when your teacher ends it.</html>");
@@ -137,7 +124,6 @@ public class TestViewerPanel extends JPanel {
 
         add(rightPanel, BorderLayout.EAST);
 
-        // Listeners
         prevButton.addActionListener(e -> navigatePage(currentPage - 1));
         nextButton.addActionListener(e -> navigatePage(currentPage + 1));
     }
@@ -153,7 +139,7 @@ public class TestViewerPanel extends JPanel {
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         titlePanel.setOpaque(false);
 
-        JLabel iconLabel = new JLabel("L"); // Placeholder for Lock icon
+        JLabel iconLabel = new JLabel("L");
         iconLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
         iconLabel.setForeground(Color.WHITE);
         iconLabel.setOpaque(true);
@@ -185,10 +171,8 @@ public class TestViewerPanel extends JPanel {
                 pdfData = apiClient.getTestPDF(classroomCode, testname);
                 totalQuestions = test.questionCount();
 
-                // --- MODIFICATION: Create shuffled question order ---
                 questionOrder = IntStream.range(0, totalQuestions).boxed().collect(Collectors.toList());
                 Collections.shuffle(questionOrder);
-                // --- END MODIFICATION ---
 
                 return null;
             }
@@ -199,10 +183,8 @@ public class TestViewerPanel extends JPanel {
                     get();
                     if (!test.status().equals("ACTIVE")) {
                         stopPolling();
-                        // --- MODIFIED ---
                         JOptionPane.showMessageDialog(mainFrame, "This test is no longer active.", "Test Ended", JOptionPane.INFORMATION_MESSAGE);
-                        mainFrame.returnToMainWindow(); // Was secureFrame.exitTest()
-                        // --- END MODIFIED ---
+                        mainFrame.returnToMainWindow();
                         return;
                     }
                     buildQuestionNav();
@@ -215,14 +197,9 @@ public class TestViewerPanel extends JPanel {
         }.execute();
     }
 
-    /**
-     * Gets the original PDF page index (question number) for the current view index.
-     * @param viewIndex The index of the question in the shuffled view (e.g., 0 for "Question 1")
-     * @return The original, unshuffled page index (e.g., 7)
-     */
     private int getRealQuestionIndex(int viewIndex) {
         if (questionOrder == null || viewIndex < 0 || viewIndex >= questionOrder.size()) {
-            return viewIndex; // Fallback
+            return viewIndex;
         }
         return questionOrder.get(viewIndex);
     }
@@ -235,26 +212,18 @@ public class TestViewerPanel extends JPanel {
 
     private void renderPage(int pageIndex) {
         currentPage = pageIndex;
-        // --- ADDED: Get the *real* question index from the shuffled list ---
         final int realQuestionIndex = getRealQuestionIndex(currentPage);
 
-        // Update labels
         pageLabel.setText("Question " + (currentPage + 1) + " of " + totalQuestions);
         prevButton.setEnabled(currentPage > 0);
         nextButton.setEnabled(currentPage < totalQuestions - 1);
 
-        // Render PDF page
         new SwingWorker<ImageIcon, Void>() {
             @Override
             protected ImageIcon doInBackground() {
-                // --- MODIFICATION: Get width from scroll pane's viewport ---
                 int targetWidth = pdfScrollPane.getViewport().getWidth() > 0 ? pdfScrollPane.getViewport().getWidth() - 10 : 800;
-                if (targetWidth <= 0) targetWidth = 800; // Fallback
-                // --- END MODIFICATION ---
-
-                // --- MODIFICATION: Use realQuestionIndex to fetch page ---
+                if (targetWidth <= 0) targetWidth = 800;
                 return PdfUtil.getScaledPdfPage(pdfData, realQuestionIndex, targetWidth);
-                // --- END MODIFICATION ---
             }
 
             @Override
@@ -263,9 +232,7 @@ public class TestViewerPanel extends JPanel {
                     ImageIcon image = get();
                     pdfLabel.setText(null);
                     pdfLabel.setIcon(image);
-                    // --- ADDED: Scroll to top of new page ---
                     SwingUtilities.invokeLater(() -> pdfScrollPane.getVerticalScrollBar().setValue(0));
-                    // --- END ADDED ---
                 } catch (Exception e) {
                     pdfLabel.setIcon(null);
                     pdfLabel.setText("Failed to render page " + (currentPage + 1));
@@ -280,37 +247,29 @@ public class TestViewerPanel extends JPanel {
     private void selectAnswer(String answer) {
         if (isSubmitting) return;
 
-        // --- MODIFICATION: Store answer against the *real* question index ---
         answers.put(getRealQuestionIndex(currentPage), answer);
-        // --- END MODIFICATION ---
 
         updateAnswerButtons();
         updateQuestionNavHighlight();
 
-        // Auto-navigate to next unanswered question
         for (int i = currentPage + 1; i < totalQuestions; i++) {
-            // --- MODIFICATION: Check answer map using real index ---
             if (!answers.containsKey(getRealQuestionIndex(i))) {
-                // --- END MODIFICATION ---
                 navigatePage(i);
                 return;
             }
         }
-        // If all after are answered, go to next sequential
         if (currentPage + 1 < totalQuestions) {
             navigatePage(currentPage + 1);
         }
     }
 
     private void updateAnswerButtons() {
-        // --- MODIFICATION: Get selected answer using real question index ---
         String selected = answers.get(getRealQuestionIndex(currentPage));
-        // --- END MODIFICATION ---
 
         for (Component comp : answerButtonPanel.getComponents()) {
             JButton btn = (JButton) comp;
             if (btn.getText().equals(selected)) {
-                btn.setBackground(new Color(37, 99, 235)); // Blue
+                btn.setBackground(new Color(37, 99, 235));
                 btn.setForeground(Color.WHITE);
             } else {
                 btn.setBackground(UIManager.getColor("Button.background"));
@@ -335,14 +294,12 @@ public class TestViewerPanel extends JPanel {
     private void updateQuestionNavHighlight() {
         for (int i = 0; i < questionNavPanel.getComponentCount(); i++) {
             JButton btn = (JButton) questionNavPanel.getComponent(i);
-            // --- MODIFICATION: Check answer map using real index ---
             int realQuestionIndex = getRealQuestionIndex(i);
             if (answers.containsKey(realQuestionIndex)) {
-                // --- END MODIFICATION ---
-                btn.setBackground(new Color(22, 163, 74)); // Green
+                btn.setBackground(new Color(22, 163, 74));
                 btn.setForeground(Color.WHITE);
             } else if (i == currentPage) {
-                btn.setBackground(new Color(37, 99, 235)); // Blue
+                btn.setBackground(new Color(37, 99, 235));
                 btn.setForeground(Color.WHITE);
             } else {
                 btn.setBackground(Color.WHITE);
@@ -364,27 +321,20 @@ public class TestViewerPanel extends JPanel {
         }
     }
 
-    // --- NEW: Helper to format answers for submission ---
     private List<String> getAnswersAsList() {
-        // This logic correctly "un-shuffles" the answers
-        // by iterating from 0 to N (original question indices)
         return IntStream.range(0, totalQuestions)
-                .mapToObj(i -> answers.getOrDefault(i, "")) // Get answer for original index i
+                .mapToObj(i -> answers.getOrDefault(i, ""))
                 .collect(Collectors.toList());
     }
 
-    // --- NEW: Worker to auto-save answers ---
     private void saveAnswers() {
-        // Don't save if already submitting or if no answers
         if (isSubmitting || answers.isEmpty()) return;
 
-        // Create a snapshot of the answers to send
         final List<String> answersToSave = getAnswersAsList();
 
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
-                // Use the new API endpoint for saving
                 apiClient.updateTestAnswers(classroomCode, testname, answersToSave);
                 return null;
             }
@@ -393,10 +343,8 @@ public class TestViewerPanel extends JPanel {
             protected void done() {
                 try {
                     get();
-                    // Log success
                     System.out.println("Answers auto-saved at " + java.time.LocalTime.now());
                 } catch (Exception e) {
-                    // Log failure, but don't interrupt the user
                     System.err.println("Failed to auto-save answers: " + e.getMessage());
                 }
             }
@@ -404,10 +352,8 @@ public class TestViewerPanel extends JPanel {
     }
 
     private void pollTestStatus() {
-        // --- MODIFIED: Call saveAnswers() first ---
         saveAnswers();
 
-        // Now, poll for status
         new SwingWorker<Test, Void>() {
             @Override
             protected Test doInBackground() throws Exception {
@@ -423,18 +369,17 @@ public class TestViewerPanel extends JPanel {
                     }
                 } catch (Exception e) {
                     System.err.println("Polling error: " + e.getMessage());
-                    stopPolling(); // Stop if polling fails
+                    stopPolling();
                 }
             }
         }.execute();
     }
 
     public void submitTest(boolean isLockout) {
-        if (isSubmitting) return; // Prevent double submission
+        if (isSubmitting) return;
         isSubmitting = true;
         stopPolling();
 
-        // --- MODIFIED: Use new helper method ---
         List<String> answersArray = getAnswersAsList();
 
         new SwingWorker<Void, Void>() {
@@ -447,18 +392,13 @@ public class TestViewerPanel extends JPanel {
             @Override
             protected void done() {
                 if (!isLockout) {
-                    // --- MODIFIED ---
                     JOptionPane.showMessageDialog(mainFrame,
                             "The test has been ended by the teacher. Your answers are submitted.",
                             "Test Ended",
                             JOptionPane.INFORMATION_MESSAGE);
-                    mainFrame.returnToMainWindow(); // Was secureFrame.exitTest()
-                    // --- END MODIFIED ---
+                    mainFrame.returnToMainWindow();
                 }
-                // If it IS a lockout, the SecureTestFrame was handling it.
-                // Since SecureTestFrame is gone, we must also handle the lockout case.
                 else {
-                    // --- ADDED ---
                     JOptionPane.showMessageDialog(
                             mainFrame,
                             "You have been locked out. Your results are submitted.",
@@ -466,7 +406,6 @@ public class TestViewerPanel extends JPanel {
                             JOptionPane.ERROR_MESSAGE
                     );
                     mainFrame.returnToMainWindow();
-                    // --- END ADDED ---
                 }
             }
         }.execute();

@@ -1,4 +1,3 @@
-// src/main/java/com/mcq/client/panels/LoginPanel.java
 package com.mcq.client.panels;
 
 import com.mcq.client.Main;
@@ -21,9 +20,8 @@ public class LoginPanel extends JPanel {
         this.mainFrame = mainFrame;
         this.authService = AuthService.getInstance();
 
-        // Use a modern layout like GridBagLayout for centering
         setLayout(new GridBagLayout());
-        setBackground(new Color(240, 245, 255)); // Light blue/slate gradient
+        setBackground(new Color(240, 245, 255));
 
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(Color.WHITE);
@@ -75,7 +73,7 @@ public class LoginPanel extends JPanel {
         gbc.anchor = GridBagConstraints.CENTER;
         loginButton = new JButton("Sign In");
         loginButton.setFont(new Font("SansSerif", Font.BOLD, 16));
-        loginButton.setBackground(new Color(37, 99, 235)); // Blue color
+        loginButton.setBackground(new Color(37, 99, 235));
         loginButton.setForeground(Color.WHITE);
         loginButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         formPanel.add(loginButton, gbc);
@@ -94,25 +92,21 @@ public class LoginPanel extends JPanel {
         registerButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         formPanel.add(registerButton, gbc);
 
-        // --- NEW QUIT BUTTON ---
         gbc.gridy++;
-        gbc.insets = new Insets(20, 10, 10, 10); // Add top margin
+        gbc.insets = new Insets(20, 10, 10, 10);
         JButton quitButton = new JButton("Quit Application");
         quitButton.setFont(new Font("SansSerif", Font.BOLD, 14));
-        quitButton.setBackground(new Color(220, 38, 38)); // Red-600
+        quitButton.setBackground(new Color(220, 38, 38));
         quitButton.setForeground(Color.WHITE);
         quitButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         formPanel.add(quitButton, gbc);
-        // --- END NEW BUTTON ---
 
-        // Add form panel to the main panel
         add(formPanel);
 
-        // --- Action Listeners ---
         loginButton.addActionListener(e -> handleLogin());
-        passwordField.addActionListener(e -> handleLogin()); // Allow login on Enter
+        passwordField.addActionListener(e -> handleLogin());
         registerButton.addActionListener(e -> mainFrame.showRegister());
-        quitButton.addActionListener(e -> System.exit(0)); // <-- ADDED
+        quitButton.addActionListener(e -> System.exit(0));
     }
 
     private void handleLogin() {
@@ -128,7 +122,6 @@ public class LoginPanel extends JPanel {
         loginButton.setEnabled(false);
         errorLabel.setText(" ");
 
-        // Use SwingWorker for background tasks to avoid freezing the UI
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -139,8 +132,7 @@ public class LoginPanel extends JPanel {
             @Override
             protected void done() {
                 try {
-                    get(); // This will throw exception if doInBackground() did
-                    // Success, the AuthService listener in Main.java will handle the navigation
+                    get();
                 } catch (Exception ex) {
                     errorLabel.setText(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
                 } finally {

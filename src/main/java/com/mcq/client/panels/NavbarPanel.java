@@ -1,4 +1,3 @@
-// src/main/java/com/mcq/client/panels/NavbarPanel.java
 package com.mcq.client.panels;
 
 import com.mcq.client.lib.AuthService;
@@ -23,11 +22,10 @@ public class NavbarPanel extends JPanel {
                 new EmptyBorder(10, 20, 10, 20)
         ));
 
-        // --- Left Side: Title ---
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         titlePanel.setOpaque(false);
 
-        JLabel iconLabel = new JLabel("B"); // Placeholder for BookOpen icon
+        JLabel iconLabel = new JLabel("B");
         iconLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
         iconLabel.setForeground(Color.WHITE);
         iconLabel.setOpaque(true);
@@ -56,7 +54,6 @@ public class NavbarPanel extends JPanel {
         titlePanel.add(textPanel);
         add(titlePanel, BorderLayout.WEST);
 
-        // --- Right Side: User Info & Logout ---
         JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         userPanel.setOpaque(false);
 
@@ -80,8 +77,8 @@ public class NavbarPanel extends JPanel {
         }
 
         JButton logoutButton = new JButton("Logout");
-        logoutButton.setBackground(new Color(254, 242, 242)); // Red-50
-        logoutButton.setForeground(new Color(220, 38, 38)); // Red-600
+        logoutButton.setBackground(new Color(254, 242, 242));
+        logoutButton.setForeground(new Color(220, 38, 38));
         logoutButton.addActionListener(e -> authService.logout());
 
         userPanel.add(userTextPanel);

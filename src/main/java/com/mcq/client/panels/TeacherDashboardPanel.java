@@ -1,4 +1,3 @@
-// src/main/java/com/mcq/client/panels/TeacherDashboardPanel.java
 package com.mcq.client.panels;
 
 import com.mcq.client.Main;
@@ -24,17 +23,14 @@ public class TeacherDashboardPanel extends JPanel {
         this.apiClient = ApiClient.getInstance();
 
         setLayout(new BorderLayout());
-        setBackground(new Color(248, 250, 252)); // Gray-50
+        setBackground(new Color(248, 250, 252));
 
-        // Add Navbar
         add(new NavbarPanel(), BorderLayout.NORTH);
 
-        // Main content area
         JPanel mainContent = new JPanel(new BorderLayout());
         mainContent.setOpaque(false);
         mainContent.setBorder(new EmptyBorder(20, 40, 20, 40));
 
-        // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
@@ -44,15 +40,14 @@ public class TeacherDashboardPanel extends JPanel {
         headerPanel.add(title, BorderLayout.WEST);
 
         JButton createButton = new JButton("+ Create Classroom");
-        createButton.setBackground(new Color(22, 163, 74)); // Green
+        createButton.setBackground(new Color(22, 163, 74));
         createButton.setForeground(Color.WHITE);
         createButton.addActionListener(e -> handleCreateClassroom());
         headerPanel.add(createButton, BorderLayout.EAST);
 
         mainContent.add(headerPanel, BorderLayout.NORTH);
 
-        // Classroom Grid
-        classroomGridPanel = new JPanel(new GridLayout(0, 3, 20, 20)); // 3 columns
+        classroomGridPanel = new JPanel(new GridLayout(0, 3, 20, 20));
         classroomGridPanel.setOpaque(false);
 
         loadingLabel = new JLabel("Loading classrooms...");
@@ -69,9 +64,7 @@ public class TeacherDashboardPanel extends JPanel {
         loadingLabel.setVisible(true);
         loadingLabel.setText("Loading classrooms...");
 
-        // Clear old classrooms before fetching
         classroomGridPanel.removeAll();
-        // Ensure scrollpane is removed if it exists
         Component[] components = ((JPanel) getComponent(1)).getComponents();
         for(Component c : components) {
             if(c instanceof JScrollPane) {
@@ -112,7 +105,7 @@ public class TeacherDashboardPanel extends JPanel {
         scrollPane.getViewport().setBackground(new Color(248, 250, 252));
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
-        JPanel mainContent = (JPanel) getComponent(1); // Get main content panel
+        JPanel mainContent = (JPanel) getComponent(1);
         mainContent.add(scrollPane, BorderLayout.CENTER);
 
         revalidate();
@@ -127,7 +120,6 @@ public class TeacherDashboardPanel extends JPanel {
                 new EmptyBorder(20, 20, 20, 20)
         ));
 
-        // Content
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
@@ -135,14 +127,12 @@ public class TeacherDashboardPanel extends JPanel {
         JLabel name = new JLabel(classroom.classroomname());
         name.setFont(new Font("SansSerif", Font.BOLD, 20));
 
-        // --- HIGHLIGHTED CODE ---
         JLabel code = new JLabel(classroom.code());
         code.setFont(new Font("Monospaced", Font.BOLD, 16));
         code.setForeground(Color.BLACK);
-        code.setBackground(new Color(243, 244, 246)); // Gray-100
+        code.setBackground(new Color(243, 244, 246));
         code.setOpaque(true);
         code.setBorder(new EmptyBorder(5, 8, 5, 8));
-        // --- END HIGHLIGHT ---
 
         JLabel students = new JLabel(classroom.classroomstudents().size() + " students");
         students.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -206,7 +196,7 @@ public class TeacherDashboardPanel extends JPanel {
                 protected void done() {
                     try {
                         get();
-                        fetchClassrooms(); // Refresh the list
+                        fetchClassrooms();
                     } catch (Exception e) {
                         JOptionPane.showMessageDialog(
                                 mainFrame,

@@ -1,4 +1,3 @@
-// src/main/java/com/mcq/client/panels/StudentDashboardPanel.java
 package com.mcq.client.panels;
 
 import com.mcq.client.Main;
@@ -24,17 +23,14 @@ public class StudentDashboardPanel extends JPanel {
         this.apiClient = ApiClient.getInstance();
 
         setLayout(new BorderLayout());
-        setBackground(new Color(248, 250, 252)); // Gray-50
+        setBackground(new Color(248, 250, 252));
 
-        // Add Navbar
         add(new NavbarPanel(), BorderLayout.NORTH);
 
-        // Main content area
         JPanel mainContent = new JPanel(new BorderLayout());
         mainContent.setOpaque(false);
         mainContent.setBorder(new EmptyBorder(20, 40, 20, 40));
 
-        // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
@@ -51,8 +47,7 @@ public class StudentDashboardPanel extends JPanel {
 
         mainContent.add(headerPanel, BorderLayout.NORTH);
 
-        // Classroom Grid
-        classroomGridPanel = new JPanel(new GridLayout(0, 3, 20, 20)); // 3 columns, variable rows
+        classroomGridPanel = new JPanel(new GridLayout(0, 3, 20, 20));
         classroomGridPanel.setOpaque(false);
 
         loadingLabel = new JLabel("Loading classrooms...");
@@ -69,12 +64,10 @@ public class StudentDashboardPanel extends JPanel {
         loadingLabel.setVisible(true);
         loadingLabel.setText("Loading classrooms...");
 
-        // Clear old classrooms before fetching
         classroomGridPanel.removeAll();
-        
+
         JPanel mainContent = (JPanel) getComponent(1);
 
-        // --- FIX: Remove old scrollpane and add loading label back ---
         Component centerComponent = ((BorderLayout) mainContent.getLayout()).getLayoutComponent(BorderLayout.CENTER);
         if (centerComponent != null && centerComponent instanceof JScrollPane) {
             mainContent.remove(centerComponent);
@@ -82,7 +75,6 @@ public class StudentDashboardPanel extends JPanel {
         mainContent.add(loadingLabel, BorderLayout.CENTER);
         mainContent.revalidate();
         mainContent.repaint();
-        // --- END FIX ---
 
 
         new SwingWorker<List<ClassroomDTO>, Void>() {
@@ -113,20 +105,17 @@ public class StudentDashboardPanel extends JPanel {
         for (ClassroomDTO classroom : classrooms) {
             classroomGridPanel.add(createClassroomCard(classroom));
         }
-        // Add scroll pane to the main content
         JScrollPane scrollPane = new JScrollPane(classroomGridPanel);
         scrollPane.getViewport().setBackground(new Color(248, 250, 252));
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
-        JPanel mainContent = (JPanel) getComponent(1); // Get main content panel
-        
-        // --- FIX: Remove loading label before adding scroll pane ---
+        JPanel mainContent = (JPanel) getComponent(1);
+
         Component centerComponent = ((BorderLayout) mainContent.getLayout()).getLayoutComponent(BorderLayout.CENTER);
         if (centerComponent != null && centerComponent == loadingLabel) {
             mainContent.remove(loadingLabel);
         }
-        // --- END FIX ---
-        
+
         mainContent.add(scrollPane, BorderLayout.CENTER);
 
         revalidate();
@@ -141,7 +130,6 @@ public class StudentDashboardPanel extends JPanel {
                 new EmptyBorder(20, 20, 20, 20)
         ));
 
-        // Content
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
@@ -149,14 +137,12 @@ public class StudentDashboardPanel extends JPanel {
         JLabel name = new JLabel(classroom.classroomname());
         name.setFont(new Font("SansSerif", Font.BOLD, 20));
 
-        // --- HIGHLIGHTED CODE ---
         JLabel code = new JLabel(classroom.code());
         code.setFont(new Font("Monospaced", Font.BOLD, 16));
         code.setForeground(Color.BLACK);
-        code.setBackground(new Color(243, 244, 246)); // Gray-100
+        code.setBackground(new Color(243, 244, 246));
         code.setOpaque(true);
         code.setBorder(new EmptyBorder(5, 8, 5, 8));
-        // --- END HIGHLIGHT ---
 
         JLabel teacher = new JLabel("Teacher: " + classroom.classroomteacher().firstname() + " " + classroom.classroomteacher().lastname());
         teacher.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -191,15 +177,13 @@ public class StudentDashboardPanel extends JPanel {
         JPanel mainContent = (JPanel) getComponent(1);
         loadingLabel.setText("No classrooms yet. Join one to get started!");
         loadingLabel.setVisible(true);
-        
-        // --- FIX: Ensure loadingLabel is in the CENTER ---
+
         Component centerComponent = ((BorderLayout) mainContent.getLayout()).getLayoutComponent(BorderLayout.CENTER);
         if (centerComponent != null && centerComponent != loadingLabel) {
             mainContent.remove(centerComponent);
             mainContent.add(loadingLabel, BorderLayout.CENTER);
         }
-        // --- END FIX ---
-        
+
         revalidate();
         repaint();
     }
@@ -209,15 +193,13 @@ public class StudentDashboardPanel extends JPanel {
         loadingLabel.setText("Error: " + message);
         loadingLabel.setForeground(Color.RED);
         loadingLabel.setVisible(true);
-        
-        // --- FIX: Ensure loadingLabel is in the CENTER ---
+
         Component centerComponent = ((BorderLayout) mainContent.getLayout()).getLayoutComponent(BorderLayout.CENTER);
         if (centerComponent != null && centerComponent != loadingLabel) {
             mainContent.remove(centerComponent);
             mainContent.add(loadingLabel, BorderLayout.CENTER);
         }
-        // --- END FIX ---
-        
+
         revalidate();
         repaint();
     }
@@ -242,7 +224,7 @@ public class StudentDashboardPanel extends JPanel {
                 protected void done() {
                     try {
                         get();
-                        fetchClassrooms(); // Refresh the list
+                        fetchClassrooms();
                     } catch (Exception e) {
                         JOptionPane.showMessageDialog(
                                 mainFrame,

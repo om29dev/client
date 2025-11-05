@@ -1,4 +1,3 @@
-// src/main/java/com/mcq/client/panels/RegisterPanel.java
 package com.mcq.client.panels;
 
 import com.mcq.client.Main;
@@ -23,7 +22,7 @@ public class RegisterPanel extends JPanel {
         this.authService = AuthService.getInstance();
 
         setLayout(new GridBagLayout());
-        setBackground(new Color(236, 253, 245)); // Light green gradient
+        setBackground(new Color(236, 253, 245));
 
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(Color.WHITE);
@@ -44,7 +43,6 @@ public class RegisterPanel extends JPanel {
         gbc.anchor = GridBagConstraints.CENTER;
         formPanel.add(title, gbc);
 
-        // --- Row 1: First and Last Name ---
         gbc.gridy++;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
@@ -61,7 +59,6 @@ public class RegisterPanel extends JPanel {
         lastnameField = new JTextField(15);
         formPanel.add(lastnameField, gbc);
 
-        // --- Row 2: Email ---
         gbc.gridy++;
         gbc.gridx = 0;
         formPanel.add(new JLabel("Email:"), gbc);
@@ -72,7 +69,6 @@ public class RegisterPanel extends JPanel {
         emailField = new JTextField(30);
         formPanel.add(emailField, gbc);
 
-        // --- Row 3: Username ---
         gbc.gridy++;
         gbc.gridx = 0;
         gbc.gridwidth = 1;
@@ -85,7 +81,6 @@ public class RegisterPanel extends JPanel {
         usernameField = new JTextField(30);
         formPanel.add(usernameField, gbc);
 
-        // --- Row 4: Role ---
         gbc.gridy++;
         gbc.gridx = 0;
         gbc.gridwidth = 1;
@@ -98,7 +93,6 @@ public class RegisterPanel extends JPanel {
         roleComboBox = new JComboBox<>(new String[]{"Student", "Teacher"});
         formPanel.add(roleComboBox, gbc);
 
-        // --- Row 5: Password ---
         gbc.gridy++;
         gbc.gridx = 0;
         gbc.gridwidth = 1;
@@ -116,7 +110,6 @@ public class RegisterPanel extends JPanel {
         confirmPasswordField = new JPasswordField(15);
         formPanel.add(confirmPasswordField, gbc);
 
-        // --- Row 6: Error Label ---
         gbc.gridy++;
         gbc.gridx = 0;
         gbc.gridwidth = 4;
@@ -125,12 +118,11 @@ public class RegisterPanel extends JPanel {
         errorLabel.setForeground(Color.RED);
         formPanel.add(errorLabel, gbc);
 
-        // --- Row 7: Buttons ---
         gbc.gridy++;
         gbc.anchor = GridBagConstraints.CENTER;
         registerButton = new JButton("Create Account");
         registerButton.setFont(new Font("SansSerif", Font.BOLD, 16));
-        registerButton.setBackground(new Color(22, 163, 74)); // Green color
+        registerButton.setBackground(new Color(22, 163, 74));
         registerButton.setForeground(Color.WHITE);
         formPanel.add(registerButton, gbc);
 
@@ -143,23 +135,20 @@ public class RegisterPanel extends JPanel {
         loginButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         formPanel.add(loginButton, gbc);
 
-        // --- NEW QUIT BUTTON ---
         gbc.gridy++;
-        gbc.insets = new Insets(20, 8, 8, 8); // Add top margin
+        gbc.insets = new Insets(20, 8, 8, 8);
         JButton quitButton = new JButton("Quit Application");
         quitButton.setFont(new Font("SansSerif", Font.BOLD, 14));
-        quitButton.setBackground(new Color(220, 38, 38)); // Red-600
+        quitButton.setBackground(new Color(220, 38, 38));
         quitButton.setForeground(Color.WHITE);
         quitButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         formPanel.add(quitButton, gbc);
-        // --- END NEW BUTTON ---
 
         add(formPanel);
 
-        // --- Action Listeners ---
         registerButton.addActionListener(e -> handleRegister());
         loginButton.addActionListener(e -> mainFrame.showLogin());
-        quitButton.addActionListener(e -> System.exit(0)); // <-- ADDED
+        quitButton.addActionListener(e -> System.exit(0));
     }
 
     private void handleRegister() {
@@ -198,7 +187,6 @@ public class RegisterPanel extends JPanel {
                     get();
                     errorLabel.setForeground(new Color(22, 163, 74));
                     errorLabel.setText(successMsg);
-                    // Redirect to login after 2 seconds
                     new Timer(2000, e -> mainFrame.showLogin()) {{
                         setRepeats(false);
                         start();

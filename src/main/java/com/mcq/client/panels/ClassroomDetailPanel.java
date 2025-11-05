@@ -1,4 +1,3 @@
-// src/main/java/com/mcq/client/panels/ClassroomDetailPanel.java
 package com.mcq.client.panels;
 
 import com.mcq.client.Main;
@@ -16,7 +15,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.awt.Rectangle; 
+import java.awt.Rectangle;
 
 public class ClassroomDetailPanel extends JPanel {
 
@@ -42,15 +41,12 @@ public class ClassroomDetailPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(new Color(248, 250, 252));
 
-        // Navbar
         add(new NavbarPanel(), BorderLayout.NORTH);
 
-        // Main content
         JPanel mainContent = new JPanel(new BorderLayout(20, 20));
         mainContent.setOpaque(false);
         mainContent.setBorder(new EmptyBorder(20, 40, 20, 40));
 
-        // Back button
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setOpaque(false);
         JButton backButton = new JButton("< Back to Dashboard");
@@ -62,7 +58,6 @@ public class ClassroomDetailPanel extends JPanel {
         topBar.add(backButton, BorderLayout.WEST);
         mainContent.add(topBar, BorderLayout.NORTH);
 
-        // Center Panel (Loading)
         loadingLabel = new JLabel("Loading classroom details...");
         loadingLabel.setHorizontalAlignment(SwingConstants.CENTER);
         mainContent.add(loadingLabel, BorderLayout.CENTER);
@@ -100,8 +95,8 @@ public class ClassroomDetailPanel extends JPanel {
     }
 
     private void buildUI(Models.ClassroomDTO classroom, List<Models.Test> tests) {
-        JPanel mainContent = (JPanel) getComponent(1); // Get main content panel
-        mainContent.remove(loadingLabel); // Remove loading label
+        JPanel mainContent = (JPanel) getComponent(1);
+        mainContent.remove(loadingLabel);
 
         BorderLayout layout = (BorderLayout) mainContent.getLayout();
         Component centerComponent = layout.getLayoutComponent(BorderLayout.CENTER);
@@ -109,13 +104,11 @@ public class ClassroomDetailPanel extends JPanel {
             mainContent.remove(centerComponent);
         }
 
-        // Split Pane for Students and Tests
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         splitPane.setResizeWeight(0.25);
         splitPane.setOpaque(false);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
 
-        // --- Left Side: Students ---
         JPanel studentPanel = new JPanel(new BorderLayout(10, 10));
         studentPanel.setOpaque(false);
         studentPanel.setBorder(new TitledBorder("Students (" + classroom.classroomstudents().size() + ")"));
@@ -125,58 +118,42 @@ public class ClassroomDetailPanel extends JPanel {
             studentListModel.addElement(student);
         }
         studentList = new JList<>(studentListModel);
-        
-        // --- MODIFICATION: Use new custom renderer ---
+
         studentList.setCellRenderer(new StudentCellRenderer(authService.isTeacher()));
 
         if (authService.isTeacher()) {
-            // --- MODIFICATION: New mouse listener to handle button clicks and double-clicks ---
             studentList.addMouseListener(new MouseAdapter() {
                 public void mouseClicked(MouseEvent e) {
                     int index = studentList.locationToIndex(e.getPoint());
                     if (index == -1) return;
 
                     String student = studentList.getModel().getElementAt(index);
-                    
-                    // Get the renderer component to calculate button bounds
+
                     Component rendererComp = studentList.getCellRenderer()
                             .getListCellRendererComponent(studentList, student, index, false, false);
-                    
-                    // Check if it's our custom panel renderer
+
                     if (rendererComp instanceof StudentCellRenderer renderer) {
-                        
-                        // Get the bounds of the delete button WITHIN the renderer
+
                         Rectangle buttonBounds = renderer.deleteButton.getBounds();
-                        
-                        // Get the bounds of the entire cell
+
                         Rectangle cellBounds = studentList.getCellBounds(index, index);
-                        
-                        // Translate the button's bounds to the JList's coordinate system
-                        // (We must also account for the renderer's insets if it has any)
+
                         buttonBounds.translate(cellBounds.x, cellBounds.y);
-                        
-                        // Check if the click was inside the button's translated bounds
+
                         if (renderer.deleteButton.isVisible() && buttonBounds.contains(e.getPoint())) {
-                            // Click was on the delete button
                             handleRemoveStudent(student);
                         } else if (e.getClickCount() == 2) {
-                            // --- THIS IS THE FIX ---
-                            // Double-click on the rest of the cell, show student info
                             handleShowStudentInfo(student);
-                            // --- END FIX ---
                         }
                     }
                 }
             });
-            // --- END MODIFICATION ---
         }
         studentPanel.add(new JScrollPane(studentList), BorderLayout.CENTER);
 
-        // --- Right Side: Classroom Info & Tests ---
         JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
         rightPanel.setOpaque(false);
 
-        // Classroom Info
         JPanel infoPanel = new JPanel(new BorderLayout());
         infoPanel.setOpaque(false);
         infoPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -184,7 +161,7 @@ public class ClassroomDetailPanel extends JPanel {
                 new EmptyBorder(15, 15, 15, 15)
         ));
 
-        JPanel infoTextPanel = new JPanel(); // New panel for text
+        JPanel infoTextPanel = new JPanel();
         infoTextPanel.setLayout(new BoxLayout(infoTextPanel, BoxLayout.Y_AXIS));
         infoTextPanel.setOpaque(false);
 
@@ -194,18 +171,16 @@ public class ClassroomDetailPanel extends JPanel {
 
         infoTextPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
-        // --- HIGHLIGHTED CODE ---
         classroomCodeLabel = new JLabel("Code: " + classroom.code());
         classroomCodeLabel.setFont(new Font("Monospaced", Font.BOLD, 18));
         classroomCodeLabel.setForeground(Color.BLACK);
-        classroomCodeLabel.setBackground(new Color(243, 244, 246)); // Gray-100
+        classroomCodeLabel.setBackground(new Color(243, 244, 246));
         classroomCodeLabel.setOpaque(true);
         classroomCodeLabel.setBorder(new EmptyBorder(5, 8, 5, 8));
-        classroomCodeLabel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align left
+        classroomCodeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         infoTextPanel.add(classroomCodeLabel);
-        // --- END HIGHLIGHT ---
 
-        infoPanel.add(infoTextPanel, BorderLayout.CENTER); // Add text panel to center
+        infoPanel.add(infoTextPanel, BorderLayout.CENTER);
 
 
         if (authService.isTeacher()) {
@@ -217,7 +192,6 @@ public class ClassroomDetailPanel extends JPanel {
         }
         rightPanel.add(infoPanel, BorderLayout.NORTH);
 
-        // Tests List
         testsPanel = new JPanel();
         testsPanel.setLayout(new BoxLayout(testsPanel, BoxLayout.Y_AXIS));
         testsPanel.setOpaque(false);
@@ -229,7 +203,6 @@ public class ClassroomDetailPanel extends JPanel {
         testsScrollPane.getViewport().setBackground(new Color(248, 250, 252));
         rightPanel.add(testsScrollPane, BorderLayout.CENTER);
 
-        // Add to split pane
         splitPane.setLeftComponent(studentPanel);
         splitPane.setRightComponent(rightPanel);
 
@@ -263,7 +236,6 @@ public class ClassroomDetailPanel extends JPanel {
         ));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
-        // Left side: Info
         JPanel info = new JPanel();
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
         info.setOpaque(false);
@@ -277,9 +249,9 @@ public class ClassroomDetailPanel extends JPanel {
         JLabel status = new JLabel(test.status());
         status.setFont(new Font("SansSerif", Font.BOLD, 12));
         if (test.status().equals("ACTIVE")) {
-            status.setForeground(new Color(22, 163, 74)); // Green
+            status.setForeground(new Color(22, 163, 74));
         } else if (test.status().equals("ENDED")) {
-            status.setForeground(new Color(217, 119, 6)); // Yellow
+            status.setForeground(new Color(217, 119, 6));
         } else {
             status.setForeground(Color.GRAY);
         }
@@ -294,7 +266,6 @@ public class ClassroomDetailPanel extends JPanel {
         info.add(Box.createRigidArea(new Dimension(0, 5)));
         info.add(meta);
 
-        // Right side: Actions
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         actions.setOpaque(false);
 
@@ -324,7 +295,7 @@ public class ClassroomDetailPanel extends JPanel {
             delete.addActionListener(e -> handleDeleteTest(test.testname()));
             actions.add(delete);
 
-        } else { // Student
+        } else {
             if (test.status().equals("ACTIVE")) {
                 JButton take = new JButton("Take Test");
                 take.setBackground(new Color(37, 99, 235));
@@ -346,47 +317,43 @@ public class ClassroomDetailPanel extends JPanel {
         return card;
     }
 
-    // --- Action Handlers (Teacher) ---
-    
-    // --- NEW METHOD ---
+
     private void handleShowStudentInfo(String studentUsername) {
-        // This worker will fetch data in the background
         new SwingWorker<Models.User, Void>() {
             @Override
             protected Models.User doInBackground() throws Exception {
-                // Call the existing ApiClient method to get user details
                 return apiClient.getUserByUsername(studentUsername);
             }
 
             @Override
             protected void done() {
                 try {
-                    Models.User student = get(); // Get the result
+                    Models.User student = get();
                     String infoMessage = String.format(
-                        "Name: %s %s\nEmail: %s\nUsername: @%s",
-                        student.firstname(),
-                        student.lastname(),
-                        student.email(),
-                        student.username()
+                            "Name: %s %s\nEmail: %s\nUsername: @%s",
+                            student.firstname(),
+                            student.lastname(),
+                            student.email(),
+                            student.username()
                     );
                     JOptionPane.showMessageDialog(
-                        ClassroomDetailPanel.this,
-                        infoMessage,
-                        "Student Information",
-                        JOptionPane.INFORMATION_MESSAGE
+                            ClassroomDetailPanel.this,
+                            infoMessage,
+                            "Student Information",
+                            JOptionPane.INFORMATION_MESSAGE
                     );
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(
-                        ClassroomDetailPanel.this,
-                        "Failed to load student info: " + e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
+                            ClassroomDetailPanel.this,
+                            "Failed to load student info: " + e.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
                     );
                 }
             }
         }.execute();
     }
-    // --- END NEW METHOD ---
+
 
     private void handleRemoveStudent(String studentUsername) {
         int confirm = JOptionPane.showConfirmDialog(
@@ -409,14 +376,12 @@ public class ClassroomDetailPanel extends JPanel {
                     try {
                         get();
                         studentListModel.removeElement(studentUsername);
-                        
-                        // --- FIX: Corrected parent hierarchy to find the JPanel and fix ClassCastException ---
+
                         JPanel studentPanel = (JPanel) studentList.getParent().getParent().getParent();
                         ((TitledBorder) studentPanel.getBorder())
                                 .setTitle("Students (" + studentListModel.getSize() + ")");
                         studentPanel.repaint();
-                        // --- END FIX ---
-                        
+
                     } catch (Exception e) {
                         JOptionPane.showMessageDialog(ClassroomDetailPanel.this, "Failed to remove student: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -526,34 +491,34 @@ public class ClassroomDetailPanel extends JPanel {
         }
     }
 
-    // --- NEW CUSTOM RENDERER for JList ---
+
     class StudentCellRenderer extends JPanel implements ListCellRenderer<String> {
         private final JLabel nameLabel = new JLabel();
-        final JButton deleteButton = new JButton("X"); // "Trash" button
+        final JButton deleteButton = new JButton("X");
         private final boolean isTeacher;
 
         public StudentCellRenderer(boolean isTeacher) {
             this.isTeacher = isTeacher;
             setLayout(new BorderLayout(5, 5));
             add(nameLabel, BorderLayout.CENTER);
-            
+
             if (isTeacher) {
                 deleteButton.setForeground(Color.RED);
                 deleteButton.setMargin(new Insets(1, 4, 1, 4));
-                deleteButton.setFocusable(false); // Prevent button from stealing focus
+                deleteButton.setFocusable(false);
                 deleteButton.setOpaque(false);
                 add(deleteButton, BorderLayout.EAST);
             }
         }
 
         @Override
-        public Component getListCellRendererComponent(JList<? extends String> list, 
-                                                      String value, 
-                                                      int index, 
-                                                      boolean isSelected, 
+        public Component getListCellRendererComponent(JList<? extends String> list,
+                                                      String value,
+                                                      int index,
+                                                      boolean isSelected,
                                                       boolean cellHasFocus) {
             nameLabel.setText(value);
-            deleteButton.setVisible(isTeacher); // Show button only for teachers
+            deleteButton.setVisible(isTeacher);
 
             if (isSelected) {
                 setBackground(list.getSelectionBackground());
@@ -562,7 +527,7 @@ public class ClassroomDetailPanel extends JPanel {
                 setBackground(list.getBackground());
                 nameLabel.setForeground(list.getForeground());
             }
-            
+
             setEnabled(list.isEnabled());
             setFont(list.getFont());
             setOpaque(true);
@@ -570,5 +535,5 @@ public class ClassroomDetailPanel extends JPanel {
             return this;
         }
     }
-    // --- END NEW RENDERER ---
+
 }

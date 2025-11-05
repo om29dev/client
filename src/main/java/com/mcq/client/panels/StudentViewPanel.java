@@ -1,4 +1,3 @@
-// src/main/java/com/mcq/client/panels/StudentViewPanel.java
 package com.mcq.client.panels;
 
 import com.mcq.client.Main;
@@ -17,9 +16,8 @@ public class StudentViewPanel extends JPanel {
         this.mainFrame = mainFrame;
         this.apiClient = ApiClient.getInstance();
         setLayout(new BorderLayout());
-        setBackground(new Color(248, 250, 252)); // Gray-50
+        setBackground(new Color(248, 250, 252));
 
-        // Show loading spinner
         JLabel loadingLabel = new JLabel("Checking for active test...");
         loadingLabel.setHorizontalAlignment(SwingConstants.CENTER);
         loadingLabel.setFont(new Font("SansSerif", Font.PLAIN, 18));
@@ -37,29 +35,23 @@ public class StudentViewPanel extends JPanel {
 
             @Override
             protected void done() {
-                removeAll(); // Remove loading label
+                removeAll();
                 try {
                     Test activeTest = get();
                     if (activeTest != null) {
                         showTestInterstitial(activeTest);
                     } else {
-                        // This is the normal state, show the dashboard
                         showStudentDashboard();
                     }
                 } catch (Exception e) {
-                    // --- THIS IS THE FIX ---
-                    // Safely get the cause's message
                     String causeMessage = (e.getCause() != null) ? e.getCause().getMessage() : null;
 
-                    // Check for 204 No Content (which is expected)
                     if (causeMessage != null && causeMessage.contains("204")) {
                         showStudentDashboard();
                     } else {
-                        // Show other errors
                         e.printStackTrace();
                         add(new JLabel("Error checking for test: " + e.getMessage()), BorderLayout.CENTER);
                     }
-                    // --- END FIX ---
                 }
                 revalidate();
                 repaint();
@@ -68,13 +60,11 @@ public class StudentViewPanel extends JPanel {
     }
 
     private void showStudentDashboard() {
-        // Add the real dashboard
         StudentDashboardPanel dashboard = new StudentDashboardPanel(mainFrame);
         add(dashboard, BorderLayout.CENTER);
     }
 
     private void showTestInterstitial(Test activeTest) {
-        // Replicates the "Test Ready" screen from App.tsx
         setLayout(new GridBagLayout());
         setBackground(new Color(240, 245, 255));
 
@@ -98,7 +88,7 @@ public class StudentViewPanel extends JPanel {
         gbc.gridy++;
         JTextArea warning = new JTextArea("This test will launch in fullscreen mode.\nExiting fullscreen multiple times will lock your test.");
         warning.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        warning.setBackground(new Color(255, 253, 235)); // Yellowish
+        warning.setBackground(new Color(255, 253, 235));
         warning.setForeground(new Color(185, 137, 0));
         warning.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         warning.setEditable(false);
